@@ -68,6 +68,8 @@ impl std::ops::Mul<Gf2Poly> for Gf2Poly {
 
 #[cfg(test)]
 mod tests {
+    use crate::prop_assert_poly_eq;
+
     use super::*;
     use proptest::prelude::*;
     #[test]
@@ -92,22 +94,22 @@ mod tests {
     proptest! {
         #[test]
         fn associativity(a: Gf2Poly, b: Gf2Poly, c: Gf2Poly) {
-            prop_assert_eq!(&(&a * &b) * &c, a * (b * c));
+            prop_assert_poly_eq!(&(&a * &b) * &c, a * (b * c));
         }
 
         #[test]
         fn commutativity(a: Gf2Poly, b: Gf2Poly) {
-            prop_assert_eq!(&a * &b, b * a);
+            prop_assert_poly_eq!(&a * &b, b * a);
         }
 
         #[test]
         fn identity(a: Gf2Poly) {
-            prop_assert_eq!(&a * &Gf2Poly::one(), a);
+            prop_assert_poly_eq!(&a * &Gf2Poly::one(), a);
         }
 
         #[test]
         fn distributivity(a: Gf2Poly, b: Gf2Poly, c: Gf2Poly) {
-            prop_assert_eq!(&a * &(&b + &c), &a * &b + &a * &c);
+            prop_assert_poly_eq!(&a * &(&b + &c), &a * &b + &a * &c);
         }
 
         #[test]

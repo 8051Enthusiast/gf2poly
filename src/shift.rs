@@ -213,6 +213,8 @@ impl std::ops::ShrAssign<u8> for Gf2Poly {
 
 #[cfg(test)]
 mod tests {
+    use crate::prop_assert_poly_eq;
+
     use super::*;
     use proptest::prelude::*;
     #[test]
@@ -248,19 +250,19 @@ mod tests {
     proptest! {
         #[test]
         fn shift_parts_left(a: Gf2Poly, n in 0u32..256, m in 0u32..256) {
-            prop_assert_eq!(((a.clone() << n) << m) >> (n + m), a);
+            prop_assert_poly_eq!(((a.clone() << n) << m) >> (n + m), a);
         }
 
         #[test]
         fn shift_parts_right(a: Gf2Poly, n in 0u32..256, m in 0u32..256) {
-            prop_assert_eq!(((a.clone() << (n + m)) >> n) >> m, a);
+            prop_assert_poly_eq!(((a.clone() << (n + m)) >> n) >> m, a);
         }
 
         #[test]
         fn shift_right_deg(a: Gf2Poly) {
             prop_assume!(!a.is_zero());
             let deg = a.deg();
-            prop_assert_eq!(a >> deg, Gf2Poly::one());
+            prop_assert_poly_eq!(a >> deg, Gf2Poly::one());
         }
     }
 }

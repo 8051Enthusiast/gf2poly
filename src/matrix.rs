@@ -1,6 +1,6 @@
 use crate::Gf2Poly;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct Gf2Poly2x2Matrix(pub Gf2Poly, pub Gf2Poly, pub Gf2Poly, pub Gf2Poly);
 
 impl Gf2Poly2x2Matrix {

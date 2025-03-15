@@ -28,7 +28,7 @@ impl std::ops::AddAssign<&Gf2Poly> for Gf2Poly {
         for (a, b) in self.limbs.iter_mut().zip(rhs.limbs.iter()) {
             *a ^= b;
         }
-        if self.limbs.len() == rhs.limbs.len() {
+        if self.deg == rhs.deg {
             self.limbs.truncate(normalized_len(&self.limbs))
         }
         self.deg = deg(&self.limbs);
@@ -81,6 +81,8 @@ impl std::ops::Neg for &Gf2Poly {
 
 #[cfg(test)]
 mod tests {
+    use crate::prop_assert_poly_eq;
+
     use super::*;
     use proptest::prelude::*;
     #[test]
@@ -94,28 +96,28 @@ mod tests {
     proptest! {
         #[test]
         fn associativity(a: Gf2Poly, b: Gf2Poly, c: Gf2Poly) {
-            prop_assert_eq!(&(&a + &b) + &c, a + (b + c));
+            prop_assert_poly_eq!(&(&a + &b) + &c, a + (b + c));
         }
 
         #[test]
         fn commutativity(a: Gf2Poly, b: Gf2Poly) {
-            prop_assert_eq!(&a + &b, b + a);
+            prop_assert_poly_eq!(&a + &b, b + a);
         }
 
         #[test]
         fn identity(a: Gf2Poly) {
             let zero = Gf2Poly::zero();
-            prop_assert_eq!(&a + &zero, a);
+            prop_assert_poly_eq!(&a + &zero, a);
         }
 
         #[test]
         fn inverse(a: Gf2Poly) {
-            prop_assert_eq!(&a + -&a, Gf2Poly::zero());
+            prop_assert_poly_eq!(&a + -&a, Gf2Poly::zero());
         }
 
         #[test]
         fn char2(a: Gf2Poly) {
-            prop_assert_eq!(&a + &a, Gf2Poly::zero());
+            prop_assert_poly_eq!(&a + &a, Gf2Poly::zero());
         }
     }
 }

@@ -136,14 +136,25 @@ impl Gf2Poly {
 
     /// Calcules rhs % self and checks whether the result is 0.
     pub fn divides(&self, rhs: &Self) -> bool {
+        if rhs.is_zero() {
+            return true;
+        }
         (rhs % self).is_zero()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::prop_assert_poly_eq;
     use super::*;
     use proptest::prelude::*;
+
+    #[test]
+    fn zero_divisibility() {
+        assert!(Gf2Poly::zero().divides(&Gf2Poly::zero()));
+        assert!(Gf2Poly::one().divides(&Gf2Poly::zero()));
+        assert!(!Gf2Poly::zero().divides(&Gf2Poly::one()));
+    }
 
     proptest! {
         #[test]
@@ -153,7 +164,9 @@ mod tests {
             }
             let a_inv = inverse_mod_power(&a, degree);
             prop_assert!(a_inv.deg() < degree);
-            prop_assert_eq!((a * a_inv).truncated(degree), Gf2Poly::one());
+            prop_assert!(a_inv.is_normalized());
+            let one = (a * a_inv).truncated(degree);
+            prop_assert_poly_eq!(&one, &Gf2Poly::one());
         }
 
         #[test]
@@ -161,6 +174,8 @@ mod tests {
             prop_assume!(!b.is_zero());
             let q = &a / &b;
             let res = a + &q * &b;
+            prop_assert!(q.is_normalized());
+            prop_assert!(res.is_normalized());
             prop_assert!(res.is_zero() || res.deg() < b.deg());
         }
     }

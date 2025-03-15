@@ -12,3 +12,8 @@ smallvec = "1.14.0"
 
 [dev-dependencies]
 proptest = "1"
+
+[profile.test]
+overflow-checks = true
+debug-assertions = true
+opt-level = 3

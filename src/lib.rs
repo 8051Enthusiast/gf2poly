@@ -268,11 +268,16 @@ impl Gf2Poly {
     /// Returns (hi, lo).
     pub fn split_at(&self, n: u64) -> (Self, Self) {
         if self.is_zero() {
-            return (Self::zero(), Self::zero())
+            return (Self::zero(), Self::zero());
         }
         let hi = self.clone() >> n;
         let lo = self.truncated(n);
         (hi, lo)
+    }
+
+    #[cfg(test)]
+    fn is_normalized(&self) -> bool {
+        self.limbs.is_empty() && self.deg == 0 || self.limbs.len() == limbs_for_deg(self.deg)
     }
 }
 
@@ -332,6 +337,18 @@ impl FromStr for Gf2Poly {
 }
 
 #[cfg(test)]
+#[macro_export]
+macro_rules! prop_assert_poly_eq {
+    ($lhs:expr, $rhs:expr) => {{
+        let lhs = $lhs;
+        let rhs = $rhs;
+        ::proptest::prelude::prop_assert_eq!(&lhs, &rhs);
+        ::proptest::prelude::prop_assert!(lhs.is_normalized());
+        ::proptest::prelude::prop_assert!(rhs.is_normalized());
+    }};
+}
+
+#[cfg(test)]
 pub mod tests {
     use super::*;
     use proptest::prelude::*;
@@ -383,7 +400,7 @@ pub mod tests {
     proptest! {
         #[test]
         fn deriv_linear(a: Gf2Poly, b: Gf2Poly) {
-            prop_assert_eq!((&a + &b).derivative(), a.derivative() + b.derivative());
+            prop_assert_poly_eq!((&a + &b).derivative(), a.derivative() + b.derivative());
         }
 
         #[test]
@@ -393,14 +410,14 @@ pub mod tests {
 
         #[test]
         fn deriv_twice(a: Gf2Poly) {
-            prop_assert_eq!(a.derivative().derivative(), Gf2Poly::zero());
+            prop_assert_poly_eq!(a.derivative().derivative(), Gf2Poly::zero());
         }
 
         #[test]
         fn string_roundtrip(a: Gf2Poly) {
             let s = a.to_string();
             let b: Gf2Poly = s.parse().unwrap();
-            prop_assert_eq!(a, b);
+            prop_assert_poly_eq!(a, b);
         }
 
         #[test]
@@ -412,23 +429,23 @@ pub mod tests {
         fn shift_euclid(mut a: Gf2Poly, split in 0u64..128) {
             let hi = a.clone() >> split << split;
             let lo = a.truncated(split);
-            prop_assert_eq!(a, hi + lo);
+            prop_assert_poly_eq!(a, hi + lo);
         }
 
         #[test]
         fn reverse_invariant(a: Gf2Poly) {
             let roundtrip = a.reverse().reverse() << a.trailing_zeros().unwrap_or(0);
-            prop_assert_eq!(roundtrip, a);
+            prop_assert_poly_eq!(roundtrip, a);
         }
 
         #[test]
         fn reverse_homo(a: Gf2Poly, b: Gf2Poly) {
-            prop_assert_eq!(a.reverse() * b.reverse(), (a * b).reverse())
+            prop_assert_poly_eq!(a.reverse() * b.reverse(), (a * b).reverse());
         }
 
         #[test]
-        fn sqaure_is_square(a: Gf2Poly) {
-            prop_assert_eq!(&a * &a, a.square());
+        fn square_is_square(a: Gf2Poly) {
+            prop_assert_poly_eq!(&a * &a, a.square())
         }
 
         #[test]
@@ -453,7 +470,7 @@ pub mod tests {
                     b.set(i);
                 }
             }
-            prop_assert_eq!(a, b);
+            prop_assert_poly_eq!(a, b)
         }
     }
 
