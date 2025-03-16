@@ -21,17 +21,17 @@ impl std::ops::Mul<&Gf2Poly> for &Gf2Poly {
             return Gf2Poly::default();
         }
 
-        let capacity = self.limbs.len() + rhs.limbs.len();
+        let capacity = self.limbs().len() + rhs.limbs().len();
         let mut limbs = LimbStorage::with_capacity(capacity);
         let ret = unsafe {
             // safety: gf2x requires that the return buffer has an + bn
             // capacity.
             gf2x_mul(
                 limbs.as_mut_ptr(),
-                self.limbs.as_ptr(),
-                self.limbs.len() as Limb,
-                rhs.limbs.as_ptr(),
-                rhs.limbs.len() as Limb,
+                self.limbs().as_ptr(),
+                self.limbs().len() as Limb,
+                rhs.limbs().as_ptr(),
+                rhs.limbs().len() as Limb,
             )
         };
         match ret {

@@ -19,7 +19,7 @@ impl std::ops::Shl<u64> for Gf2Poly {
             .deg
             .checked_add(rhs)
             .expect("Left shift would overflow degree");
-        let old_size = self.limbs.len();
+        let old_size = self.limbs().len();
         self.resize_to_deg_unnormalized(new_deg);
 
         let limb_shift = shift / BITS;
@@ -37,7 +37,7 @@ impl std::ops::Shl<u64> for Gf2Poly {
                 };
                 self.limbs[limb_shift + i] = src_val << bit_shift;
             }
-            if matches!(self.limbs.last(), Some(0)) {
+            if matches!(self.limbs().last(), Some(0)) {
                 self.limbs.pop();
             }
         }
@@ -123,7 +123,7 @@ impl std::ops::Shr<u64> for Gf2Poly {
         let Some(new_deg) = self.deg.checked_sub(rhs) else {
             return Self::zero();
         };
-        let limb_size = self.limbs.len();
+        let limb_size = self.limbs().len();
 
         let limb_shift = shift / BITS;
         let bit_shift = shift % BITS;

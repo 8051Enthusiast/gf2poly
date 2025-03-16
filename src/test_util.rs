@@ -3,8 +3,8 @@ use crate::{Gf2Poly, Limb, BITS};
 #[macro_export]
 macro_rules! prop_assert_poly_eq {
     ($lhs:expr, $rhs:expr) => {{
-        let lhs = $lhs;
-        let rhs = $rhs;
+        let lhs: Gf2Poly = $lhs;
+        let rhs: Gf2Poly = $rhs;
         ::proptest::prelude::prop_assert_eq!(&lhs, &rhs);
         ::proptest::prelude::prop_assert!(lhs.is_normalized());
         ::proptest::prelude::prop_assert!(rhs.is_normalized());

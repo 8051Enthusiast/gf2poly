@@ -166,7 +166,7 @@ mod tests {
             prop_assert!(a_inv.deg() < degree);
             prop_assert!(a_inv.is_normalized());
             let one = (a * a_inv).truncated(degree);
-            prop_assert_poly_eq!(&one, &Gf2Poly::one());
+            prop_assert_poly_eq!(one, Gf2Poly::one());
         }
 
         #[test]

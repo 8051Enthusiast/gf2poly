@@ -6,15 +6,15 @@ impl std::ops::Add<&Gf2Poly> for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(self, rhs: &Gf2Poly) -> Self::Output {
-        let new_size = self.limbs.len().max(rhs.limbs.len());
+        let new_size = self.limbs().len().max(rhs.limbs().len());
         let mut limbs = LimbStorage::with_capacity(new_size);
-        limbs.extend(self.limbs.iter().zip(rhs.limbs.iter()).map(|(a, b)| a ^ b));
-        if rhs.limbs.len() == self.limbs.len() {
+        limbs.extend(self.limbs().iter().zip(rhs.limbs().iter()).map(|(a, b)| a ^ b));
+        if rhs.limbs().len() == self.limbs().len() {
             limbs.truncate(normalized_len(&limbs));
-        } else if limbs.len() < self.limbs.len() {
-            limbs.extend_from_slice(&self.limbs[limbs.len()..]);
+        } else if limbs.len() < self.limbs().len() {
+            limbs.extend_from_slice(&self.limbs()[limbs.len()..]);
         } else {
-            limbs.extend_from_slice(&rhs.limbs[limbs.len()..]);
+            limbs.extend_from_slice(&rhs.limbs()[limbs.len()..]);
         }
         let deg = deg(&limbs);
         Gf2Poly { limbs, deg }
@@ -23,9 +23,9 @@ impl std::ops::Add<&Gf2Poly> for &Gf2Poly {
 
 impl std::ops::AddAssign<&Gf2Poly> for Gf2Poly {
     fn add_assign(&mut self, rhs: &Gf2Poly) {
-        let new_size = self.limbs.len().max(rhs.limbs.len());
+        let new_size = self.limbs().len().max(rhs.limbs().len());
         self.limbs.resize(new_size, 0);
-        for (a, b) in self.limbs.iter_mut().zip(rhs.limbs.iter()) {
+        for (a, b) in self.limbs.iter_mut().zip(rhs.limbs().iter()) {
             *a ^= b;
         }
         if self.deg == rhs.deg {
@@ -39,7 +39,7 @@ impl std::ops::Add<Gf2Poly> for Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(mut self, mut rhs: Gf2Poly) -> Self::Output {
-        if self.limbs.len() < rhs.limbs.len() {
+        if self.limbs().len() < rhs.limbs().len() {
             std::mem::swap(&mut self, &mut rhs);
         }
         self += &rhs;
