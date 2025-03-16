@@ -10,10 +10,10 @@ unsafe extern "C" {
         an: Limb,
         b: *const Limb,
         bn: Limb,
-    ) -> std::ffi::c_int;
+    ) -> core::ffi::c_int;
 }
 
-impl std::ops::Mul<&Gf2Poly> for &Gf2Poly {
+impl core::ops::Mul<&Gf2Poly> for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn mul(self, rhs: &Gf2Poly) -> Self::Output {
@@ -52,13 +52,13 @@ impl std::ops::Mul<&Gf2Poly> for &Gf2Poly {
     }
 }
 
-impl std::ops::MulAssign<&Gf2Poly> for Gf2Poly {
+impl core::ops::MulAssign<&Gf2Poly> for Gf2Poly {
     fn mul_assign(&mut self, rhs: &Gf2Poly) {
         *self = &*self * rhs;
     }
 }
 
-impl std::ops::Mul<Gf2Poly> for Gf2Poly {
+impl core::ops::Mul<Gf2Poly> for Gf2Poly {
     type Output = Self;
 
     fn mul(self, rhs: Gf2Poly) -> Self::Output {

@@ -1,4 +1,10 @@
 #![debugger_visualizer(gdb_script_file = "gf2poly_dbg.py")]
+#![cfg_attr(not(test), no_std)]
+
+extern crate alloc;
+
+pub use rand;
+
 mod add;
 mod div;
 mod factor;
@@ -8,13 +14,13 @@ mod mul;
 mod shift;
 #[cfg(test)]
 mod test_util;
+use core::{fmt::Display, str::FromStr};
 use rand::Rng;
-use std::{fmt::Display, str::FromStr};
 
-pub type Limb = std::ffi::c_ulong;
+pub type Limb = core::ffi::c_ulong;
 // a plain vec is easier for debugging
 #[cfg(debug_assertions)]
-type LimbStorage = Vec<Limb>;
+type LimbStorage = alloc::vec::Vec<Limb>;
 #[cfg(not(debug_assertions))]
 type LimbStorage = smallvec::SmallVec<[Limb; 2]>;
 
@@ -143,9 +149,9 @@ impl Gf2Poly {
 
     /// Converts a slice of bytes into a polynomial, with least significant byte first.
     pub fn from_bytes(bytes: &[u8]) -> Gf2Poly {
-        let limb_size = std::mem::size_of::<Limb>();
+        let limb_size = core::mem::size_of::<Limb>();
         let mut limbs = LimbStorage::with_capacity(bytes.len() / limb_size + 1);
-        for chunk in bytes.chunks(std::mem::size_of::<Limb>()) {
+        for chunk in bytes.chunks(core::mem::size_of::<Limb>()) {
             let mut limb = 0;
             for (i, &byte) in chunk.iter().enumerate() {
                 limb |= (byte as Limb) << (i << 3);
@@ -167,7 +173,7 @@ impl Gf2Poly {
     pub fn one() -> Self {
         Gf2Poly {
             deg: 0,
-            limbs: std::iter::once(1).collect(),
+            limbs: core::iter::once(1).collect(),
         }
     }
 
@@ -175,7 +181,7 @@ impl Gf2Poly {
     pub fn x() -> Self {
         Gf2Poly {
             deg: 1,
-            limbs: std::iter::once(2).collect(),
+            limbs: core::iter::once(2).collect(),
         }
     }
 
@@ -415,7 +421,7 @@ fn unspacen_bits(mut x: Limb) -> Limb {
 }
 
 impl Display for Gf2Poly {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let Some((last, limbs)) = self.limbs().split_last() else {
             write!(f, "0")?;
             return Ok(());

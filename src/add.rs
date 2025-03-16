@@ -2,7 +2,7 @@ use crate::{LimbStorage, deg, normalized_len};
 
 use super::Gf2Poly;
 
-impl std::ops::Add<&Gf2Poly> for &Gf2Poly {
+impl core::ops::Add<&Gf2Poly> for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(self, rhs: &Gf2Poly) -> Self::Output {
@@ -21,7 +21,7 @@ impl std::ops::Add<&Gf2Poly> for &Gf2Poly {
     }
 }
 
-impl std::ops::AddAssign<&Gf2Poly> for Gf2Poly {
+impl core::ops::AddAssign<&Gf2Poly> for Gf2Poly {
     fn add_assign(&mut self, rhs: &Gf2Poly) {
         let new_size = self.limbs().len().max(rhs.limbs().len());
         self.limbs.resize(new_size, 0);
@@ -35,19 +35,19 @@ impl std::ops::AddAssign<&Gf2Poly> for Gf2Poly {
     }
 }
 
-impl std::ops::Add<Gf2Poly> for Gf2Poly {
+impl core::ops::Add<Gf2Poly> for Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(mut self, mut rhs: Gf2Poly) -> Self::Output {
         if self.limbs().len() < rhs.limbs().len() {
-            std::mem::swap(&mut self, &mut rhs);
+            core::mem::swap(&mut self, &mut rhs);
         }
         self += &rhs;
         self
     }
 }
 
-impl std::ops::Add<Gf2Poly> for &Gf2Poly {
+impl core::ops::Add<Gf2Poly> for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(self, rhs: Gf2Poly) -> Self::Output {
@@ -55,7 +55,7 @@ impl std::ops::Add<Gf2Poly> for &Gf2Poly {
     }
 }
 
-impl std::ops::Add<&Gf2Poly> for Gf2Poly {
+impl core::ops::Add<&Gf2Poly> for Gf2Poly {
     type Output = Gf2Poly;
 
     fn add(self, rhs: &Gf2Poly) -> Self::Output {
@@ -63,7 +63,7 @@ impl std::ops::Add<&Gf2Poly> for Gf2Poly {
     }
 }
 
-impl std::ops::Neg for Gf2Poly {
+impl core::ops::Neg for Gf2Poly {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -71,7 +71,7 @@ impl std::ops::Neg for Gf2Poly {
     }
 }
 
-impl std::ops::Neg for &Gf2Poly {
+impl core::ops::Neg for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn neg(self) -> Self::Output {

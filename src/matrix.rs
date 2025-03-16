@@ -28,7 +28,7 @@ impl Gf2Poly2x2Matrix {
     }
 }
 
-impl std::ops::Mul<Gf2Poly2x2Matrix> for Gf2Poly2x2Matrix {
+impl core::ops::Mul<Gf2Poly2x2Matrix> for Gf2Poly2x2Matrix {
     type Output = Gf2Poly2x2Matrix;
 
     fn mul(self, other: Gf2Poly2x2Matrix) -> Self::Output {
@@ -36,8 +36,8 @@ impl std::ops::Mul<Gf2Poly2x2Matrix> for Gf2Poly2x2Matrix {
     }
 }
 
-impl std::fmt::Display for Gf2Poly2x2Matrix {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Gf2Poly2x2Matrix {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "[[{}, {}], [{}, {}]]", self.0, self.1, self.2, self.3)
     }
 }

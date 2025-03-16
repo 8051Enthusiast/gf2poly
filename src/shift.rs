@@ -2,7 +2,7 @@ use crate::BITS;
 
 use crate::Gf2Poly;
 
-impl std::ops::Shl<u64> for Gf2Poly {
+impl core::ops::Shl<u64> for Gf2Poly {
     type Output = Self;
 
     fn shl(mut self, rhs: u64) -> Self::Output {
@@ -45,7 +45,7 @@ impl std::ops::Shl<u64> for Gf2Poly {
     }
 }
 
-impl std::ops::Shl<u32> for Gf2Poly {
+impl core::ops::Shl<u32> for Gf2Poly {
     type Output = Self;
 
     fn shl(self, rhs: u32) -> Self::Output {
@@ -53,7 +53,7 @@ impl std::ops::Shl<u32> for Gf2Poly {
     }
 }
 
-impl std::ops::Shl<usize> for Gf2Poly {
+impl core::ops::Shl<usize> for Gf2Poly {
     type Output = Self;
 
     fn shl(self, rhs: usize) -> Self::Output {
@@ -61,7 +61,7 @@ impl std::ops::Shl<usize> for Gf2Poly {
     }
 }
 
-impl std::ops::Shl<u16> for Gf2Poly {
+impl core::ops::Shl<u16> for Gf2Poly {
     type Output = Self;
 
     fn shl(self, rhs: u16) -> Self::Output {
@@ -69,7 +69,7 @@ impl std::ops::Shl<u16> for Gf2Poly {
     }
 }
 
-impl std::ops::Shl<u8> for Gf2Poly {
+impl core::ops::Shl<u8> for Gf2Poly {
     type Output = Self;
 
     fn shl(self, rhs: u8) -> Self::Output {
@@ -77,37 +77,37 @@ impl std::ops::Shl<u8> for Gf2Poly {
     }
 }
 
-impl std::ops::ShlAssign<u64> for Gf2Poly {
+impl core::ops::ShlAssign<u64> for Gf2Poly {
     fn shl_assign(&mut self, rhs: u64) {
-        *self = std::mem::take(self) << rhs;
+        *self = core::mem::take(self) << rhs;
     }
 }
 
-impl std::ops::ShlAssign<u32> for Gf2Poly {
+impl core::ops::ShlAssign<u32> for Gf2Poly {
     fn shl_assign(&mut self, rhs: u32) {
-        *self = std::mem::take(self) << rhs;
+        *self = core::mem::take(self) << rhs;
     }
 }
 
-impl std::ops::ShlAssign<usize> for Gf2Poly {
+impl core::ops::ShlAssign<usize> for Gf2Poly {
     fn shl_assign(&mut self, rhs: usize) {
-        *self = std::mem::take(self) << rhs;
+        *self = core::mem::take(self) << rhs;
     }
 }
 
-impl std::ops::ShlAssign<u16> for Gf2Poly {
+impl core::ops::ShlAssign<u16> for Gf2Poly {
     fn shl_assign(&mut self, rhs: u16) {
-        *self = std::mem::take(self) << rhs;
+        *self = core::mem::take(self) << rhs;
     }
 }
 
-impl std::ops::ShlAssign<u8> for Gf2Poly {
+impl core::ops::ShlAssign<u8> for Gf2Poly {
     fn shl_assign(&mut self, rhs: u8) {
-        *self = std::mem::take(self) << rhs;
+        *self = core::mem::take(self) << rhs;
     }
 }
 
-impl std::ops::Shr<u64> for Gf2Poly {
+impl core::ops::Shr<u64> for Gf2Poly {
     type Output = Self;
 
     fn shr(mut self, rhs: u64) -> Self::Output {
@@ -149,7 +149,7 @@ impl std::ops::Shr<u64> for Gf2Poly {
     }
 }
 
-impl std::ops::Shr<u32> for Gf2Poly {
+impl core::ops::Shr<u32> for Gf2Poly {
     type Output = Self;
 
     fn shr(self, rhs: u32) -> Self::Output {
@@ -157,7 +157,7 @@ impl std::ops::Shr<u32> for Gf2Poly {
     }
 }
 
-impl std::ops::Shr<usize> for Gf2Poly {
+impl core::ops::Shr<usize> for Gf2Poly {
     type Output = Self;
 
     fn shr(self, rhs: usize) -> Self::Output {
@@ -165,7 +165,7 @@ impl std::ops::Shr<usize> for Gf2Poly {
     }
 }
 
-impl std::ops::Shr<u16> for Gf2Poly {
+impl core::ops::Shr<u16> for Gf2Poly {
     type Output = Self;
 
     fn shr(self, rhs: u16) -> Self::Output {
@@ -173,7 +173,7 @@ impl std::ops::Shr<u16> for Gf2Poly {
     }
 }
 
-impl std::ops::Shr<u8> for Gf2Poly {
+impl core::ops::Shr<u8> for Gf2Poly {
     type Output = Self;
 
     fn shr(self, rhs: u8) -> Self::Output {
@@ -181,33 +181,33 @@ impl std::ops::Shr<u8> for Gf2Poly {
     }
 }
 
-impl std::ops::ShrAssign<u64> for Gf2Poly {
+impl core::ops::ShrAssign<u64> for Gf2Poly {
     fn shr_assign(&mut self, rhs: u64) {
-        *self = std::mem::take(self) >> rhs;
+        *self = core::mem::take(self) >> rhs;
     }
 }
 
-impl std::ops::ShrAssign<u32> for Gf2Poly {
+impl core::ops::ShrAssign<u32> for Gf2Poly {
     fn shr_assign(&mut self, rhs: u32) {
-        *self = std::mem::take(self) >> rhs;
+        *self = core::mem::take(self) >> rhs;
     }
 }
 
-impl std::ops::ShrAssign<usize> for Gf2Poly {
+impl core::ops::ShrAssign<usize> for Gf2Poly {
     fn shr_assign(&mut self, rhs: usize) {
-        *self = std::mem::take(self) >> rhs;
+        *self = core::mem::take(self) >> rhs;
     }
 }
 
-impl std::ops::ShrAssign<u16> for Gf2Poly {
+impl core::ops::ShrAssign<u16> for Gf2Poly {
     fn shr_assign(&mut self, rhs: u16) {
-        *self = std::mem::take(self) >> rhs;
+        *self = core::mem::take(self) >> rhs;
     }
 }
 
-impl std::ops::ShrAssign<u8> for Gf2Poly {
+impl core::ops::ShrAssign<u8> for Gf2Poly {
     fn shr_assign(&mut self, rhs: u8) {
-        *self = std::mem::take(self) >> rhs;
+        *self = core::mem::take(self) >> rhs;
     }
 }
 

@@ -1,6 +1,8 @@
 use rand::SeedableRng;
 
 use crate::Gf2Poly;
+use alloc::vec::Vec;
+use alloc::vec;
 
 impl Gf2Poly {
     fn square_free_factorization_impl(&self, multiplicity_multiplier: u64) -> Vec<(Gf2Poly, u64)> {

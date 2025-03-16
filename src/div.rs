@@ -58,7 +58,7 @@ impl Gf2Poly {
     }
 }
 
-impl std::ops::Div for &Gf2Poly {
+impl core::ops::Div for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -66,7 +66,7 @@ impl std::ops::Div for &Gf2Poly {
     }
 }
 
-impl std::ops::Div for Gf2Poly {
+impl core::ops::Div for Gf2Poly {
     type Output = Gf2Poly;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -74,19 +74,19 @@ impl std::ops::Div for Gf2Poly {
     }
 }
 
-impl std::ops::DivAssign<&Gf2Poly> for Gf2Poly {
+impl core::ops::DivAssign<&Gf2Poly> for Gf2Poly {
     fn div_assign(&mut self, rhs: &Gf2Poly) {
         *self = &*self / rhs;
     }
 }
 
-impl std::ops::DivAssign<Gf2Poly> for Gf2Poly {
+impl core::ops::DivAssign<Gf2Poly> for Gf2Poly {
     fn div_assign(&mut self, rhs: Gf2Poly) {
         *self = &*self / &rhs;
     }
 }
 
-impl std::ops::Rem for &Gf2Poly {
+impl core::ops::Rem for &Gf2Poly {
     type Output = Gf2Poly;
 
     fn rem(self, rhs: Self) -> Self::Output {
@@ -97,7 +97,7 @@ impl std::ops::Rem for &Gf2Poly {
     }
 }
 
-impl std::ops::Rem for Gf2Poly {
+impl core::ops::Rem for Gf2Poly {
     type Output = Gf2Poly;
 
     fn rem(self, rhs: Self) -> Self::Output {
@@ -108,7 +108,7 @@ impl std::ops::Rem for Gf2Poly {
     }
 }
 
-impl std::ops::RemAssign<&Gf2Poly> for Gf2Poly {
+impl core::ops::RemAssign<&Gf2Poly> for Gf2Poly {
     fn rem_assign(&mut self, rhs: &Gf2Poly) {
         if rhs.is_zero() {
             return;
@@ -117,7 +117,7 @@ impl std::ops::RemAssign<&Gf2Poly> for Gf2Poly {
     }
 }
 
-impl std::ops::RemAssign<Gf2Poly> for Gf2Poly {
+impl core::ops::RemAssign<Gf2Poly> for Gf2Poly {
     fn rem_assign(&mut self, rhs: Gf2Poly) {
         if rhs.is_zero() {
             return;

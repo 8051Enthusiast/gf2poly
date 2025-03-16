@@ -15,11 +15,11 @@ fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
         }
 
         let (q, r) = a0.divmod(&a1);
-        std::mem::swap(a0, a1);
+        core::mem::swap(a0, a1);
         *a1 = r;
 
-        std::mem::swap(&mut a00, &mut a10);
-        std::mem::swap(&mut a01, &mut a11);
+        core::mem::swap(&mut a00, &mut a10);
+        core::mem::swap(&mut a01, &mut a11);
 
         a00 += &(&a10 * &q);
         a01 += &(&a11 * &q);
@@ -71,20 +71,20 @@ impl Gf2Poly {
         while !b.is_zero() {
             debug_assert!(a.deg() >= b.deg());
             if b.divides(a) {
-                return std::mem::take(b);
+                return core::mem::take(b);
             }
 
             hgcd(a, b);
             if b.is_zero() {
-                return std::mem::take(a);
+                return core::mem::take(a);
             }
             let c = &*a % &*b;
 
-            *a = std::mem::take(b);
+            *a = core::mem::take(b);
             *b = c;
         }
 
-        std::mem::take(a)
+        core::mem::take(a)
     }
 
     pub fn gcd(self, other: Self) -> Self {
