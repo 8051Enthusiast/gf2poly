@@ -1,5 +1,11 @@
 use crate::Gf2Poly;
 
+pub(crate) trait MatrixSubspace: core::ops::Mul<Self, Output = Self> + Sized {
+    fn projection(matrix: Gf2Poly2x2Matrix) -> Self;
+    fn quotient_matrix_projection(quotient: Gf2Poly) -> Self;
+    fn identity() -> Self;
+}
+
 #[derive(Clone, Default)]
 pub(crate) struct Gf2Poly2x2Matrix(pub Gf2Poly, pub Gf2Poly, pub Gf2Poly, pub Gf2Poly);
 
@@ -10,15 +16,6 @@ impl Gf2Poly2x2Matrix {
         let c = &self.2 * &other.0 + &self.3 * &other.2;
         let d = &self.2 * &other.1 + &self.3 * &other.3;
         Self(a, b, c, d)
-    }
-
-    pub fn identity() -> Self {
-        Gf2Poly2x2Matrix(
-            Gf2Poly::one(),
-            Gf2Poly::zero(),
-            Gf2Poly::zero(),
-            Gf2Poly::one(),
-        )
     }
 
     pub fn apply(&self, a: &Gf2Poly, b: &Gf2Poly) -> (Gf2Poly, Gf2Poly) {
@@ -39,6 +36,47 @@ impl core::ops::Mul<Gf2Poly2x2Matrix> for Gf2Poly2x2Matrix {
 impl core::fmt::Display for Gf2Poly2x2Matrix {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "[[{}, {}], [{}, {}]]", self.0, self.1, self.2, self.3)
+    }
+}
+
+impl MatrixSubspace for Gf2Poly2x2Matrix {
+    fn projection(matrix: Gf2Poly2x2Matrix) -> Self {
+        matrix
+    }
+
+    fn quotient_matrix_projection(quotient: Gf2Poly) -> Self {
+        Gf2Poly2x2Matrix(Gf2Poly::zero(), Gf2Poly::one(), Gf2Poly::one(), quotient)
+    }
+
+    fn identity() -> Self {
+        Gf2Poly2x2Matrix(Gf2Poly::one(), Gf2Poly::zero(), Gf2Poly::zero(), Gf2Poly::one())
+    }
+}
+
+/// This is so we can be generic in the hgcd routine for xgcd and regular gcd.
+/// We don't want to calculate extra information for the gcd, so we just
+/// throw it away by converting into this type.
+pub(crate) struct TrivialSpace;
+
+impl core::ops::Mul<Self> for TrivialSpace {
+    type Output = Self;
+    
+    fn mul(self, _: Self) -> Self::Output {
+        TrivialSpace
+    }
+}
+
+impl MatrixSubspace for TrivialSpace {
+    fn projection(_: Gf2Poly2x2Matrix) -> Self {
+        Self
+    }
+
+    fn quotient_matrix_projection(_: Gf2Poly) -> Self {
+        Self
+    }
+
+    fn identity() -> Self {
+        Self
     }
 }
 

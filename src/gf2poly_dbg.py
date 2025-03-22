@@ -51,13 +51,13 @@ class Gf2PolyPrinter:
 
 def to_string_from_list(arr, bits_per_word):
     if len(arr) == 0:
-        return "Gf2Poly(0)"
+        return "Gf2Poly(0x0)"
     digits = bits_per_word // 4
     front = arr[-1]
     ret = f"{int(front):x}"
     for word in arr[-2::-1]:
         ret += f"{int(word):0{digits}x}"
-    return f"Gf2Poly({ret})"
+    return f"Gf2Poly(0x{ret})"
 
 
 def lookup(val):

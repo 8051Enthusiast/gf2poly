@@ -2,13 +2,13 @@
 name = "gf2poly"
 version = "0.1.0"
 edition = "2024"
-author = "8051enthusiast <8051enthusiast@protonmail.com>"
+authors = ["8051enthusiast <8051enthusiast@protonmail.com>"]
 license = "LGPL"
 description = "GF(2) polynomial arithmetic"
 links = "gf2x"
 
 [dependencies]
-rand = "0.9.0"
+rand = { version = "0.9", default-features = false, features = ["std_rng"]}
 smallvec = { version = "1.14.0", features = ["union"] }
 
 [features]

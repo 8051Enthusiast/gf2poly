@@ -468,6 +468,7 @@ impl FromStr for Gf2Poly {
 pub mod tests {
     use super::*;
     use proptest::prelude::*;
+    use rand::SeedableRng;
 
     proptest! {
         #[test]
@@ -568,8 +569,8 @@ pub mod tests {
         }
 
         #[test]
-        fn random_polynomial(n in 0..1024u64) {
-            let mut rng = rand::rng();
+        fn random_polynomial(n in 0..1024u64, seed: u64) {
+            let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
             let random = Gf2Poly::random(n, &mut rng);
             prop_assert!(random.is_normalized());
             prop_assert_eq!(random.deg(), n);
