@@ -49,7 +49,12 @@ impl MatrixSubspace for Gf2Poly2x2Matrix {
     }
 
     fn identity() -> Self {
-        Gf2Poly2x2Matrix(Gf2Poly::one(), Gf2Poly::zero(), Gf2Poly::zero(), Gf2Poly::one())
+        Gf2Poly2x2Matrix(
+            Gf2Poly::one(),
+            Gf2Poly::zero(),
+            Gf2Poly::zero(),
+            Gf2Poly::one(),
+        )
     }
 }
 
@@ -60,7 +65,7 @@ pub(crate) struct TrivialSpace;
 
 impl core::ops::Mul<Self> for TrivialSpace {
     type Output = Self;
-    
+
     fn mul(self, _: Self) -> Self::Output {
         TrivialSpace
     }

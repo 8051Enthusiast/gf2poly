@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc fd40d57377e0db3601d9383432cc8bc68c9bdbddb190c0bfdcf01ccace4d31f3 # shrinks to a = Gf2Poly { deg: 62, limbs: [4611686018427387904] }, b = Gf2Poly { deg: 14, limbs: [16389] }, c = Gf2Poly { deg: 24, limbs: [16777216] }
+cc 0a3cfc4e7b8fbcebb3a47d5eb10465a203824f7282dbb07c7946a5eb732c80ce # shrinks to a = Gf2Poly { deg: 27, limbs: [136917581] }, b = Gf2Poly { deg: 90, limbs: [656796733092086095, 126984409] }, c = Gf2Poly { deg: 1, limbs: [2] }

@@ -24,8 +24,8 @@ fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
         core::mem::swap(&mut a00, &mut a10);
         core::mem::swap(&mut a01, &mut a11);
 
-        a00 += &(&a10 * &q);
-        a01 += &(&a11 * &q);
+        a10 += &(&a00 * &q);
+        a11 += &(&a01 * &q);
     }
 }
 
@@ -60,9 +60,10 @@ fn hgcd<M: MatrixSubspace>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     let second_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut b1_hi, &mut b2_hi);
     drop((b1_hi, b2_hi));
     let (res_a0, res_a1) = second_matrix.apply(&b1, &b2);
+    let res = M::projection(second_matrix) * first_matrix_step;
     *a0 = res_a0;
     *a1 = res_a1;
-    M::projection(second_matrix) * first_matrix_step
+    res
 }
 
 impl Gf2Poly {
@@ -75,10 +76,8 @@ impl Gf2Poly {
             debug_assert!(a.deg() >= b.deg());
             let (quotient, remainder) = a.divmod(b);
             if remainder.is_zero() {
-                return (
-                    core::mem::take(b),
-                    M::quotient_matrix_projection(quotient) * acc,
-                );
+                acc = M::quotient_matrix_projection(quotient) * acc;
+                return (core::mem::take(b), acc);
             }
 
             acc = hgcd::<M>(a, b) * acc;
@@ -177,10 +176,8 @@ mod tests {
 
     #[test]
     fn xgcd_big() {
-        let a: Gf2Poly = "4000000000000000000000".parse().unwrap();
-        let b: Gf2Poly = "4005000000"
-            .parse()
-            .unwrap();
+        let a: Gf2Poly = "f2341b2123ad24c3b2e829e".parse().unwrap();
+        let b: Gf2Poly = "1052649a".parse().unwrap();
         let (gcd, [x, y]) = a.clone().xgcd(b.clone());
         assert_eq!(a * x + b * y, gcd);
     }
