@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 6b39763cd0f926f45ba15465e55f05257482d2ad0bc8d171e430efdd0085bd3b # shrinks to modulo = Gf2Poly { deg: 0, limbs: [1] }, elem = Gf2Poly { deg: 27, limbs: [134217728] }
+cc 5da843883855137f891f6e150cf8411f911a84d1cd0e8c4119144ff36ce0a9a9 # shrinks to modulo = Gf2Poly { deg: 34, limbs: [17179869184] }, a = Gf2Poly { deg: 76, limbs: [4533970397744513531, 4096] }, b = Gf2Poly { deg: 0, limbs: [1] }, n = 1

@@ -1,6 +1,5 @@
 #![debugger_visualizer(gdb_script_file = "gf2poly_dbg.py")]
 #![cfg_attr(not(test), no_std)]
-
 extern crate alloc;
 
 pub use rand;
@@ -10,6 +9,7 @@ mod div;
 mod factor;
 mod gcd;
 mod matrix;
+mod modulo;
 mod mul;
 mod shift;
 #[cfg(test)]
@@ -79,6 +79,11 @@ impl Gf2Poly {
     /// Whether the polynomial is either the zero or one polynomial.
     pub fn is_constant(&self) -> bool {
         self.deg() == 0
+    }
+
+    /// Whether the polynomial is the 1 polynomial.
+    pub fn is_one(&self) -> bool {
+        self.is_constant() && !self.is_zero()
     }
 
     /// Gets the nth coefficient of the polynomial,
@@ -308,7 +313,7 @@ impl Gf2Poly {
     }
 
     /// Calculates self^n, the nth power of self.
-    pub fn power(self, mut n: u64) -> Self {
+    pub fn power(&self, mut n: u64) -> Self {
         if n == 0 {
             return Gf2Poly::one();
         }
@@ -319,11 +324,13 @@ impl Gf2Poly {
 
         let mut result = Gf2Poly::one();
         let mut base = self;
+        let mut base_val;
         while n > 0 {
             if n % 2 == 1 {
                 result *= &base;
             }
-            base = base.square();
+            base_val = base.square();
+            base = &base_val;
             n >>= 1;
         }
         result

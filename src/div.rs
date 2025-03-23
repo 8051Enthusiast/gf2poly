@@ -127,14 +127,14 @@ impl core::ops::RemAssign<Gf2Poly> for Gf2Poly {
 }
 
 impl Gf2Poly {
-    /// Calculates the quotient and remainder of the division.
+    /// Calculates (quotient, remainder) of the division.
     pub fn divmod(&self, by: &Self) -> (Self, Self) {
         let quotient = self / by;
         let remainder = self + &quotient * by;
         (quotient, remainder)
     }
 
-    /// Calcules rhs % self and checks whether the result is 0.
+    /// Returns whether `self` divides `rhs`.
     pub fn divides(&self, rhs: &Self) -> bool {
         if rhs.is_zero() {
             return true;
