@@ -98,7 +98,7 @@ impl Gf2Poly {
     /// The result has the property that it divides `self` and `other` and
     /// it divides no other element that has that property.
     ///
-    /// # Example
+    /// ## Example
     /// ```rust
     /// # use gf2poly::Gf2Poly;
     /// let a: Gf2Poly = "1caa4".parse().unwrap();
@@ -126,7 +126,7 @@ impl Gf2Poly {
     /// Besides returning what `gcd` would return, it also returns `[x, y]`
     /// such that `self * x + other * y == gcd`.
     ///
-    /// # Example
+    /// ## Example
     /// ```rust
     /// # use gf2poly::Gf2Poly;
     /// let a: Gf2Poly = "1caa4".parse().unwrap();
@@ -153,6 +153,28 @@ impl Gf2Poly {
             core::mem::swap(&mut x, &mut y);
         }
         (gcd, [x, y])
+    }
+
+    /// Given `self` and `other`, calculates the least common multiple.
+    /// The least common multiple `lcm` is the unique polynomial such
+    /// that `self` and `other` divide `lcm` and `lcm` divides all other
+    /// polynomials that are divisible by both `self` and `other`.
+    ///
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "930".parse().unwrap();
+    /// let b: Gf2Poly = "13bc".parse().unwrap();
+    /// let lcm = a.lcm(b);
+    /// assert_eq!(lcm.to_string(), "a4150");
+    /// ```
+    pub fn lcm(self, other: Self) -> Self {
+        if self.is_zero() || other.is_zero() {
+            return Gf2Poly::zero();
+        }
+        let prod = &self * &other;
+        let gcd = self.gcd(other);
+        prod / gcd
     }
 }
 
@@ -199,6 +221,16 @@ mod tests {
             let bmul = &b * &c;
             let (gcd, [x, y]) = amul.clone().xgcd(bmul.clone());
             prop_assert_poly_eq!(amul * x + bmul * y, gcd);
+        }
+
+        #[test]
+        fn lcm(a: Gf2Poly, b: Gf2Poly, c: Gf2Poly) {
+            let amul = &a * &c;
+            let bmul = &b * &c;
+            let lcm = amul.clone().lcm(bmul.clone());
+            prop_assert!(amul.divides(&lcm));
+            prop_assert!(bmul.divides(&lcm));
+            prop_assert!(lcm.divides(&(a * b * c)));
         }
     }
 }
