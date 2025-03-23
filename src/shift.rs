@@ -12,7 +12,8 @@ impl core::ops::Shl<u64> for Gf2Poly {
         if self.is_zero() {
             return self;
         }
-        let Ok(shift) = usize::try_from(rhs) else {
+        let bit_shift = rhs % BITS;
+        let Ok(limb_shift) = usize::try_from(rhs / BITS) else {
             panic!("Left shift of {rhs} is too big")
         };
         let new_deg = self
@@ -22,8 +23,6 @@ impl core::ops::Shl<u64> for Gf2Poly {
         let old_size = self.limbs().len();
         self.resize_to_deg_unnormalized(new_deg);
 
-        let limb_shift = shift / BITS;
-        let bit_shift = shift % BITS;
         if bit_shift == 0 {
             self.limbs.copy_within(..old_size, limb_shift);
             self.limbs[..limb_shift].fill(0);
@@ -117,7 +116,8 @@ impl core::ops::Shr<u64> for Gf2Poly {
         if self.is_zero() {
             return self;
         }
-        let Ok(shift) = usize::try_from(rhs) else {
+        let bit_shift = rhs % BITS;
+        let Ok(limb_shift) = usize::try_from(rhs / BITS) else {
             return Self::zero();
         };
         let Some(new_deg) = self.deg.checked_sub(rhs) else {
@@ -125,8 +125,6 @@ impl core::ops::Shr<u64> for Gf2Poly {
         };
         let limb_size = self.limbs().len();
 
-        let limb_shift = shift / BITS;
-        let bit_shift = shift % BITS;
         if bit_shift == 0 {
             self.limbs.copy_within(limb_shift.., 0);
             self.limbs.truncate(limb_size - limb_shift);

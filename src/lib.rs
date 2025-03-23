@@ -14,17 +14,18 @@ mod mul;
 mod shift;
 #[cfg(test)]
 mod test_util;
+use alloc::vec::Vec;
 use core::{fmt::Display, str::FromStr};
 use rand::Rng;
 
 pub type Limb = core::ffi::c_ulong;
 // a plain vec is easier for debugging
 #[cfg(debug_assertions)]
-type LimbStorage = alloc::vec::Vec<Limb>;
+type LimbStorage = Vec<Limb>;
 #[cfg(not(debug_assertions))]
 type LimbStorage = smallvec::SmallVec<[Limb; 2]>;
 
-const BITS: usize = Limb::BITS as usize;
+const BITS: u64 = Limb::BITS as u64;
 
 const HALF_MASK: Limb = alternating_mask(BITS.ilog2() - 1);
 
@@ -36,11 +37,11 @@ fn deg(limbs: &[Limb]) -> u64 {
     let Some(last) = limbs.last() else {
         return 0;
     };
-    limbs.len() as u64 * BITS as u64 - 1 - last.leading_zeros() as u64
+    limbs.len() as u64 * BITS - 1 - last.leading_zeros() as u64
 }
 
 fn limbs_for_deg(n: u64) -> usize {
-    usize::try_from(n / BITS as u64).unwrap() + 1
+    usize::try_from(n / BITS).unwrap() + 1
 }
 
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -89,12 +90,12 @@ impl Gf2Poly {
     /// Gets the nth coefficient of the polynomial,
     /// with the 0th coefficient being the constant part.
     pub fn get(&self, n: u64) -> bool {
-        let Ok(idx) = usize::try_from(n / BITS as u64) else {
+        let Ok(idx) = usize::try_from(n / BITS) else {
             return false;
         };
         match self.limbs().get(idx) {
             Some(limb) => {
-                let res = n % BITS as u64;
+                let res = n % BITS;
                 (limb >> res) & 1 == 1
             }
             None => false,
@@ -108,8 +109,8 @@ impl Gf2Poly {
             self.resize_to_deg_unnormalized(n);
             self.deg = n;
         }
-        let idx = n / BITS as u64;
-        let res = n % BITS as u64;
+        let idx = n / BITS;
+        let res = n % BITS;
         self.limbs[usize::try_from(idx).unwrap()] |= 1 << res;
     }
 
@@ -119,8 +120,8 @@ impl Gf2Poly {
         if n > self.deg {
             return;
         }
-        let idx = n / BITS as u64;
-        let res = n % BITS as u64;
+        let idx = n / BITS;
+        let res = n % BITS;
         self.limbs[usize::try_from(idx).unwrap()] &= !(1 << res);
         if n == self.deg {
             self.normalize();
@@ -161,7 +162,7 @@ impl Gf2Poly {
     /// Converts a slice of bytes into a polynomial, with least significant byte first.
     pub fn from_bytes(bytes: &[u8]) -> Gf2Poly {
         let limb_size = core::mem::size_of::<Limb>();
-        let mut limbs = LimbStorage::with_capacity(bytes.len() / limb_size + 1);
+        let mut limbs = LimbStorage::with_capacity((bytes.len() + limb_size - 1) / limb_size);
         for chunk in bytes.chunks(core::mem::size_of::<Limb>()) {
             let mut limb = 0;
             for (i, &byte) in chunk.iter().enumerate() {
@@ -170,6 +171,22 @@ impl Gf2Poly {
             limbs.push(limb);
         }
         Gf2Poly::from_limb_storage(limbs)
+    }
+
+    /// Converts a polynomial into a vector of bytes, with least significant byte first.
+    /// The vector is always as short as possible, which means that this method returns
+    /// an empty vector for 0.
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity((self.deg() / 8 + 1) as usize);
+        let Some((last, limbs)) = self.limbs().split_last() else {
+            return Vec::new();
+        };
+        for limb in limbs {
+            bytes.extend_from_slice(&limb.to_le_bytes());
+        }
+        let last_bytes = (self.deg() % BITS) / 8 + 1;
+        bytes.extend_from_slice(&last.to_le_bytes()[..last_bytes as usize]);
+        bytes
     }
 
     /// 0 (Zero).
@@ -194,6 +211,13 @@ impl Gf2Poly {
             deg: 1,
             limbs: core::iter::once(2).collect(),
         }
+    }
+
+    /// Returns x^n
+    pub fn x_to_the_power_of(n: u64) -> Self {
+        let mut x = Gf2Poly::zero();
+        x.set(n);
+        x
     }
 
     /// Calculates the derivative of self.
@@ -229,7 +253,7 @@ impl Gf2Poly {
             return Self::zero();
         }
         let mut limbs;
-        let bit_offset = (self.deg + 1) % BITS as u64;
+        let bit_offset = (self.deg + 1) % BITS;
         if bit_offset == 0 {
             limbs = self
                 .limbs()
@@ -249,7 +273,7 @@ impl Gf2Poly {
                 } else {
                     first = false;
                 }
-                prev = rev >> (BITS as u64 - bit_offset);
+                prev = rev >> (BITS - bit_offset);
             }
             if prev != 0 {
                 limbs.push(prev);
@@ -267,7 +291,7 @@ impl Gf2Poly {
         let mut zeros = 0;
         for limb in self.limbs().iter() {
             if *limb == 0 {
-                zeros += BITS as u64;
+                zeros += BITS;
             } else {
                 zeros += limb.trailing_zeros() as u64;
                 break;
@@ -294,8 +318,10 @@ impl Gf2Poly {
         if self.deg < n {
             return;
         }
-        let n_limbs = (n - 1) as usize / BITS;
-        let n_bits = (n - 1) as usize % BITS;
+        let n_bits = ((n - 1) % BITS) as usize;
+        let Ok(n_limbs) = usize::try_from((n - 1) / BITS) else {
+            return;
+        };
         self.limbs.truncate(n_limbs + 1);
         self.limbs[n_limbs] &= (1 << n_bits) | ((1 << n_bits) - 1);
         self.normalize();
@@ -422,7 +448,7 @@ impl Gf2Poly {
         let mut limbs = alloc::vec![0; len];
         rng.fill(limbs.as_mut_slice());
         let last = &mut limbs[len - 1];
-        let deg_part = deg % BITS as u64;
+        let deg_part = deg % BITS;
         *last &= (1 << deg_part) - 1;
         *last |= 1 << deg_part;
         Gf2Poly { deg, limbs }
@@ -478,7 +504,7 @@ impl FromStr for Gf2Poly {
     type Err = Gf2PolyConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut limbs = LimbStorage::with_capacity(s.len() / BITS + 1);
+        let mut limbs = LimbStorage::with_capacity(s.len() / BITS as usize + 1);
         let mut limb = 0;
         let mut limb_idx = 0;
         for c in s.chars().rev() {
@@ -609,6 +635,15 @@ pub mod tests {
             let random = Gf2Poly::random(n, &mut rng);
             prop_assert!(random.is_normalized());
             prop_assert_eq!(random.deg(), n);
+        }
+
+        #[test]
+        fn bytes_roundtrip(a: Gf2Poly) {
+            let bytes = a.to_bytes();
+            let b = Gf2Poly::from_bytes(&bytes);
+            prop_assert!(bytes.last() != Some(&0));
+            prop_assert_eq!(b.to_bytes(), bytes);
+            prop_assert_poly_eq!(a, b); 
         }
     }
 

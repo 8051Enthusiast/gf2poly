@@ -1,10 +1,10 @@
+use crate::{BITS, Gf2Poly, Limb};
 use proptest::prelude::*;
-use crate::{Gf2Poly, Limb, BITS};
 #[macro_export]
 macro_rules! prop_assert_poly_eq {
     ($lhs:expr, $rhs:expr) => {{
-        let lhs: Gf2Poly = $lhs;
-        let rhs: Gf2Poly = $rhs;
+        let lhs: crate::Gf2Poly = $lhs;
+        let rhs: crate::Gf2Poly = $rhs;
         ::proptest::prelude::prop_assert_eq!(&lhs, &rhs);
         ::proptest::prelude::prop_assert!(lhs.is_normalized());
         ::proptest::prelude::prop_assert!(rhs.is_normalized());
@@ -20,8 +20,8 @@ fn exp_dist(expected_val: f64) -> impl Strategy<Value = u64> {
 pub fn gf2poly_deg(expected_deg: f64) -> BoxedStrategy<Gf2Poly> {
     exp_dist(expected_deg)
         .prop_flat_map(|deg| {
-            let non_leading_limbs = deg as usize / BITS;
-            let last_bit = (deg as usize) % BITS;
+            let non_leading_limbs = (deg / BITS) as usize;
+            let last_bit = (deg % BITS) as usize;
             let lower_mask = (last_bit > 0)
                 .then_some(((1 as Limb) << last_bit) - 1)
                 .unwrap_or(1);
