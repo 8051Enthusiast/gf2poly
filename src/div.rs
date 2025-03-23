@@ -1,24 +1,12 @@
 use crate::Gf2Poly;
+// the division algorithm here is described in
+// http://people.csail.mit.edu/madhu/ST12/scribe/lect06.pdf
 
-fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
-    if degree == 1 {
-        return Gf2Poly::one();
-    }
-
-    let hdeg = degree / 2;
-    let lo = f.truncated(hdeg);
-    let lo_inv = inverse_mod_power_impl(&lo, hdeg);
-    let unit_hi = (&lo * &lo_inv) >> hdeg;
-    let hi = f.clone() >> hdeg;
-    let mut mul = &hi * &lo_inv;
-    mul.truncate_mut(hdeg);
-    mul += &unit_hi;
-    let mut hi_inv = &lo_inv * &mul;
-    hi_inv.truncate_mut(hdeg);
-    (hi_inv << hdeg) + lo_inv
-}
-
+// this calculates f^-1 mod x^degree, which is needed for the fast
+// division algorithm.
 fn inverse_mod_power(f: &Gf2Poly, degree: u64) -> Gf2Poly {
+    // we do some preprocessing in this function so that we can
+    // make assumptions about the input in inverse_mod_power_impl
     if degree == 0 {
         return Gf2Poly::zero();
     }
@@ -32,8 +20,40 @@ fn inverse_mod_power(f: &Gf2Poly, degree: u64) -> Gf2Poly {
     res
 }
 
+
+// it's assumed that `f.deg()` < `degree` and degree is a power of two,
+// also taht f is invertible
+fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
+    if degree == 1 {
+        return Gf2Poly::one();
+    }
+
+    // we split f into the halves lo and hi so that f = lo + hi * x^hdeg
+    let hdeg = degree / 2;
+    let lo = f.truncated(hdeg);
+    let lo_inv = inverse_mod_power_impl(&lo, hdeg);
+    // the product lo * lo_inv will be unit_hi * x^hdeg + 1 since the lower part has to
+    // be lo * lo^-1 = 1 mod x^hdeg.
+    let unit_hi = (&lo * &lo_inv) >> hdeg;
+    let hi = f.clone() >> hdeg;
+    let mut mul = &hi * &lo_inv;
+    mul.truncate_mut(hdeg);
+    mul += &unit_hi;
+    let mut hi_inv = &lo_inv * &mul;
+    hi_inv.truncate_mut(hdeg);
+    (hi_inv << hdeg) + lo_inv
+}
+
 impl Gf2Poly {
     fn div_rev(&self, rhs: &Gf2Poly) -> Gf2Poly {
+        // the trick here is that reversal of polynomial coefficients
+        // is a multiplicative homomorphism (so rev(a) * rev(b) = rev(a * b))
+        // the remainder `r` of a division f  = gq + r is at the lower part of the coefficients,
+        // so if we reverse the polynomials we get
+        // Rev(f) = Rev(q) * Rev(g) + x^(deg(f) - deg(r)) * Rev(r)
+        // and if we calculate it modulo x^(deg(f) - deg(g)) we get to ignore the remainder
+        // and can calculate the inverse modulo the power of x with the inverse_mod_power
+        // function that uses hensel lifting above.
         let rev_lhs = self.reverse();
         let rev_rhs = rhs.reverse();
         let result_deg = self.deg() - rhs.deg();

@@ -1,8 +1,13 @@
 use crate::{
     Gf2Poly,
-    matrix::{Gf2Poly2x2Matrix, MatrixSubspace, TrivialSpace},
+    matrix::{Gf2Poly2x2Matrix, MaybeMatrix, TrivialSpace},
 };
 
+// For an explanation of the fast gcd (hgcd) see
+// https://faculty.sites.iastate.edu/jia/files/inline-files/polydivide.pdf
+
+/// basically just a regular xgcd implementation, but it stops as soon
+/// as it reaches half degree
 fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
     let halfdeg = a0.deg() / 2;
     debug_assert!(a0.deg() >= a1.deg());
@@ -29,21 +34,36 @@ fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
     }
 }
 
-fn hgcd<M: MatrixSubspace>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
+// the core point of how the hgcd algorithm works is
+// * we can compose the xgcd factors we normally have, as matrices
+// * if polynomials are of similar size, we only need to look at
+//   their upper part to figure out the quotient
+// the hgcd uses these facts to reduce the gcd of the polynomials until
+// it reaches half of the degree
+fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     let halfdeg = a0.deg() / 2;
     debug_assert!(a0.deg() >= a1.deg());
     if a1.deg() <= halfdeg {
         return M::identity();
     }
 
+    // note that for degree < 4, we don't actually make progress
+    // using this function, so we have to switch implementation
     if a0.deg() < 4 {
         return M::projection(iter_hgcd(a0, a1));
     }
 
+    // we recursively run the hgcd on just the upper halfs, since
+    // it turns out the lower halfs don't affect the resulting matrix here
     let mut a0_hi = a0.clone() >> halfdeg;
     let mut a1_hi = a1.clone() >> halfdeg;
     let first_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut a0_hi, &mut a1_hi);
     drop((a0_hi, a1_hi));
+    // while the matrix is the same when operating on the higher halfs,
+    // the resulting a0_hi/a1_hi do not represent useful information and
+    // we have to use the matrix to calculate the corresponding reduction
+    // in a0 and a1
+    // b0 and b1 should be around 3/4 of the original degree
     let (b0, b1) = first_matrix.apply(a0, a1);
     if b1.deg() <= halfdeg {
         *a0 = b0;
@@ -55,6 +75,8 @@ fn hgcd<M: MatrixSubspace>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     let quotient_matrix = M::quotient_matrix_projection(quotient);
     let first_matrix_step = quotient_matrix * M::projection(first_matrix);
     let quarterdeg = halfdeg / 2;
+    // we do the same as above, but instead of using the (deg / 2)..deg part,
+    // we use the (deg / 4)..(deg * 3/4) part
     let mut b1_hi = b1.clone() >> quarterdeg;
     let mut b2_hi = b2.clone() >> quarterdeg;
     let second_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut b1_hi, &mut b2_hi);
@@ -67,7 +89,7 @@ fn hgcd<M: MatrixSubspace>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
 }
 
 impl Gf2Poly {
-    fn gcd_impl<M: MatrixSubspace>(&mut self, other: &mut Self) -> (Self, M) {
+    fn gcd_impl<M: MaybeMatrix>(&mut self, other: &mut Self) -> (Self, M) {
         let a = self;
         let b = other;
         let mut acc = M::identity();

@@ -4,17 +4,31 @@ use crate::Gf2Poly;
 use alloc::vec::Vec;
 use alloc::vec;
 
+// Wikipedia has an excellent page on factorization of polynomials over finite fields:
+// https://en.wikipedia.org/wiki/Factorization_of_polynomials_over_finite_fields
+
 impl Gf2Poly {
     fn square_free_factorization_impl(&self, multiplicity_multiplier: u64) -> Vec<(Gf2Poly, u64)> {
         let mut factors = Vec::new();
 
+        // the gcd of a polynomial with its derivative decreases the multiplicities
+        // of all roots (except for squares, see later where we recurse) by one
         let mut duplicate_part = self.clone().gcd(self.derivative());
+        // if we divide the our original by the polynomial with multiplicities reduced,
+        // the result will have multiplicities of most 1, ie it is squarefree
         let mut squarefree = self / &duplicate_part;
 
         let mut multiplicity = 0;
         while squarefree.deg() > 0 {
+            // here, for each factor with multiplicity e_i, the result will have a multiplicity
+            // * at most e_i - 1 (because of the reduced multiplicities in duplicate_part)
+            // * at most 1 (because squarefree only has multiplicity at most 1)
+            // the result is that we have multiplicity 1 for each (non-square) e_i > 1 and 0 for others
             let other_uniq_factors = duplicate_part.clone().gcd(squarefree.clone());
+            // and if we remove those from squarefree, we get the complement, ie all those with e_i = 1
             let factor = &squarefree / &other_uniq_factors;
+
+            // prepare for next iteration
             duplicate_part /= &other_uniq_factors;
             squarefree = other_uniq_factors;
             multiplicity += multiplicity_multiplier;
@@ -23,7 +37,13 @@ impl Gf2Poly {
             }
         }
 
-        // polynomial is inseparable
+        // if we have a square in characteristics 2, its derivative will be zero:
+        // due to the freshman's dream, the square will only have mononomials of
+        // even degree, and the derivative of them will always be zero because
+        // they will be multiplied by 2.
+        // this can be worked around by just dividing all exponents by 2 and running
+        // the same algorithm again, with multiplicities doubled as everything
+        // is really a square
         if duplicate_part.deg() > 0 {
             let mut t = duplicate_part
                 .sqrt()
@@ -82,6 +102,7 @@ impl Gf2Poly {
 
         let mut current;
         let mut current_ref = self;
+        // hypersquare is here x^(2^k) mod current_ref for the kth iteration of the loop (starting from 1)
         let mut hypersquare = Gf2Poly::x();
         let mut degree = 0;
         let mut factors = Vec::new();
@@ -92,17 +113,21 @@ impl Gf2Poly {
                 factors.push((current_ref.clone(), degree));
                 break;
             }
-            hypersquare = hypersquare.square();
-            if hypersquare.deg() >= current_ref.deg() {
-                hypersquare %= current_ref;
-            }
+            hypersquare = current_ref.mod_square(&hypersquare);
 
+            // the `product` variable `x^(2^k) + x` is the product of all polynomials whose
+            // degree divides `k`
             let product = &hypersquare + Gf2Poly::x();
+            // note that `product` is actually modulo `current_ref`, but since we calculate
+            // the gcd with `current_ref`, it doesn't make a difference for the gcd calculation.
+            // as a result, we get all polynomials dividing `current_ref` whose degree divides `k`/`degree`
             let common = product.gcd(current_ref.clone());
             if common.deg() == 0 {
                 continue;
             }
 
+            // make sure to remove the current polynomials because otherwise they will be found again
+            // in iteration 2*k
             current = current_ref / &common;
             current_ref = &current;
             factors.push((common, degree));
@@ -112,6 +137,11 @@ impl Gf2Poly {
         factors
     }
 
+    // the trace Tr_L/K(a) of a field extension L/K where L = K/f for some irreducible polynomial
+    // f can be calculate as `sum(a^(2^i) for i in range(deg(f)))` and the result will be
+    // an element of the subfield K.
+    // here we do that calculation modulo `self` where `self` is not necessarily irreducible
+    // and with a given degree, not the one of the polynomial, hence _pseudo_ trace
     fn pseudo_trace(&self, deg: u64, a: &Gf2Poly) -> Gf2Poly {
         let mut square_ref = a;
         let mut square;
@@ -122,18 +152,22 @@ impl Gf2Poly {
         let mut res = Gf2Poly::zero();
         for _ in 0..deg - 1 {
             res += square_ref;
-            square = square_ref.square();
-            if square.deg() >= self.deg() {
-                square %= self;
-            }
+            square = self.mod_square(square_ref);
             square_ref = &square;
         }
         res += square_ref;
         res
     }
 
+    // typically, for odd characteristics we typically raise a power that can be either
+    // 1 or -1 (or 0 in rare cases) modulo an irreducible power, however this doesn't work out in char 2
+    // as 1 == -1. instead we use the trace, which should be 0 or 1 with roughly same probability
     fn same_degree_factorization_split(&self, deg: u64, a: &Gf2Poly) -> Option<(Gf2Poly, Gf2Poly)> {
+        // by the chinese remainder theorem, this is the same as taking the trace in each individual
+        // irreducible factor, where it should be either 0 or 1 modulo that factor
         let trace = self.pseudo_trace(deg, a);
+        // if we take the gcd with self, we get all those factors where the result was 0 and not 1,
+        // which should be roughly half of them
         let common = self.clone().gcd(trace);
         if common.deg() == 0 || common.deg() == self.deg() {
             return None;

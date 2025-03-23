@@ -1,6 +1,6 @@
 use crate::Gf2Poly;
 
-pub(crate) trait MatrixSubspace: core::ops::Mul<Self, Output = Self> + Sized {
+pub(crate) trait MaybeMatrix: core::ops::Mul<Self, Output = Self> + Sized {
     fn projection(matrix: Gf2Poly2x2Matrix) -> Self;
     fn quotient_matrix_projection(quotient: Gf2Poly) -> Self;
     fn identity() -> Self;
@@ -39,7 +39,7 @@ impl core::fmt::Display for Gf2Poly2x2Matrix {
     }
 }
 
-impl MatrixSubspace for Gf2Poly2x2Matrix {
+impl MaybeMatrix for Gf2Poly2x2Matrix {
     fn projection(matrix: Gf2Poly2x2Matrix) -> Self {
         matrix
     }
@@ -71,7 +71,7 @@ impl core::ops::Mul<Self> for TrivialSpace {
     }
 }
 
-impl MatrixSubspace for TrivialSpace {
+impl MaybeMatrix for TrivialSpace {
     fn projection(_: Gf2Poly2x2Matrix) -> Self {
         Self
     }

@@ -52,7 +52,7 @@ impl core::ops::AddAssign<&Gf2Poly> for Gf2Poly {
 
 impl core::ops::AddAssign<Gf2Poly> for Gf2Poly {
     fn add_assign(&mut self, mut rhs: Gf2Poly) {
-        if rhs.deg() > self.deg() {
+        if rhs.limbs().len() > self.limbs().len() {
             core::mem::swap(self, &mut rhs);
         }
         *self += &rhs;
