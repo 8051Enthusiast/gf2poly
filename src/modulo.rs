@@ -25,9 +25,9 @@ impl Gf2Poly {
         }
         let (gcd, [_, inv]) = self.clone().xgcd(elem.clone());
         if !gcd.is_one() {
-            return None;
+            None
         } else {
-            return Some(inv);
+            Some(inv)
         }
     }
 

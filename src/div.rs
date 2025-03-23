@@ -8,7 +8,7 @@ fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
     let hdeg = degree / 2;
     let lo = f.truncated(hdeg);
     let lo_inv = inverse_mod_power_impl(&lo, hdeg);
-    let unit_hi = &lo * &lo_inv >> hdeg;
+    let unit_hi = (&lo * &lo_inv) >> hdeg;
     let hi = f.clone() >> hdeg;
     let mut mul = &hi * &lo_inv;
     mul.truncate_mut(hdeg);
@@ -145,8 +145,8 @@ impl Gf2Poly {
 
 #[cfg(test)]
 mod tests {
-    use crate::prop_assert_poly_eq;
     use super::*;
+    use crate::prop_assert_poly_eq;
     use proptest::prelude::*;
 
     #[test]

@@ -17,7 +17,7 @@ fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
             break Gf2Poly2x2Matrix(a00, a01, a10, a11);
         }
 
-        let (q, r) = a0.divmod(&a1);
+        let (q, r) = a0.divmod(a1);
         core::mem::swap(a0, a1);
         *a1 = r;
 
@@ -44,7 +44,7 @@ fn hgcd<M: MatrixSubspace>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     let mut a1_hi = a1.clone() >> halfdeg;
     let first_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut a0_hi, &mut a1_hi);
     drop((a0_hi, a1_hi));
-    let (b0, b1) = first_matrix.apply(&a0, &a1);
+    let (b0, b1) = first_matrix.apply(a0, a1);
     if b1.deg() <= halfdeg {
         *a0 = b0;
         *a1 = b1;

@@ -133,7 +133,7 @@ impl Gf2Poly {
     }
 
     fn same_degree_factorization_split(&self, deg: u64, a: &Gf2Poly) -> Option<(Gf2Poly, Gf2Poly)> {
-        let trace = self.pseudo_trace(deg, &a);
+        let trace = self.pseudo_trace(deg, a);
         let common = self.clone().gcd(trace);
         if common.deg() == 0 || common.deg() == self.deg() {
             return None;

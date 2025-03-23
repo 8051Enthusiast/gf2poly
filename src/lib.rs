@@ -40,7 +40,7 @@ fn deg(limbs: &[Limb]) -> u64 {
 }
 
 fn limbs_for_deg(n: u64) -> usize {
-    usize::try_from(n as u64 / BITS as u64).unwrap() + 1
+    usize::try_from(n / BITS as u64).unwrap() + 1
 }
 
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -145,9 +145,9 @@ impl Gf2Poly {
 
     /// Converts a slice of limbs into a polynomial, with least significant limb first.
     pub fn from_limbs(limbs: &[Limb]) -> Self {
-        let len = normalized_len(&limbs);
+        let len = normalized_len(limbs);
         let limb_vec = LimbStorage::from(&limbs[..len]);
-        let deg = deg(&limbs);
+        let deg = deg(limbs);
         Gf2Poly {
             limbs: limb_vec,
             deg,
@@ -207,7 +207,7 @@ impl Gf2Poly {
     /// ```
     pub fn derivative(&self) -> Self {
         const MASK: Limb = Limb::MAX / 3;
-        let limbs = self.limbs().iter().map(|x| x >> 1 & MASK).collect();
+        let limbs = self.limbs().iter().map(|x| (x >> 1) & MASK).collect();
         Self::from_limb_storage(limbs)
     }
 
@@ -224,7 +224,6 @@ impl Gf2Poly {
     /// let a: Gf2Poly = "dbf".parse().unwrap();
     /// assert_eq!(a.reverse().to_string(), "fdb");
     /// ```
-
     pub fn reverse(&self) -> Self {
         if self.is_zero() {
             return Self::zero();
@@ -246,7 +245,7 @@ impl Gf2Poly {
             for x in self.limbs().iter().rev() {
                 let rev = x.reverse_bits();
                 if !first {
-                    limbs.push(rev << bit_offset | prev);
+                    limbs.push((rev << bit_offset) | prev);
                 } else {
                     first = false;
                 }
@@ -298,7 +297,7 @@ impl Gf2Poly {
         let n_limbs = (n - 1) as usize / BITS;
         let n_bits = (n - 1) as usize % BITS;
         self.limbs.truncate(n_limbs + 1);
-        self.limbs[n_limbs] &= (1 << n_bits) | (1 << n_bits) - 1;
+        self.limbs[n_limbs] &= (1 << n_bits) | ((1 << n_bits) - 1);
         self.normalize();
     }
 
@@ -327,7 +326,7 @@ impl Gf2Poly {
         let mut base_val;
         while n > 0 {
             if n % 2 == 1 {
-                result *= &base;
+                result *= base;
             }
             base_val = base.square();
             base = &base_val;
@@ -346,7 +345,7 @@ impl Gf2Poly {
         let mut limbs = LimbStorage::with_capacity(limbs_for_deg(deg));
         let (last_limb, start_limbs) = self.limbs().split_last().unwrap();
         let lo_half = |x: Limb| x & HALF_MASK;
-        let hi_half = |x: Limb| (x >> BITS / 2) & HALF_MASK;
+        let hi_half = |x: Limb| (x >> (BITS / 2)) & HALF_MASK;
         for x in start_limbs {
             limbs.push(spacen_bits(lo_half(*x)));
             limbs.push(spacen_bits(hi_half(*x)));
@@ -380,7 +379,7 @@ impl Gf2Poly {
             if !is_square_limb(lo) || !is_square_limb(hi) {
                 return None;
             }
-            limbs.push(unspacen_bits(lo) | unspacen_bits(hi) << (BITS / 2));
+            limbs.push(unspacen_bits(lo) | (unspacen_bits(hi) << (BITS / 2)));
         }
 
         if self.limbs().len() % 2 != 0 {
@@ -420,8 +419,7 @@ impl Gf2Poly {
             return Self::one();
         }
         let len = limbs_for_deg(deg);
-        let mut limbs = LimbStorage::with_capacity(len);
-        limbs.resize(len, 0);
+        let mut limbs = alloc::vec![0; len];
         rng.fill(limbs.as_mut_slice());
         let last = &mut limbs[len - 1];
         let deg_part = deg % BITS as u64;
