@@ -61,6 +61,12 @@ impl Gf2Poly {
     }
 
     /// Degree of the polynomial. Returns degree 0 for the zero polynomial.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "7".parse().unwrap();
+    /// assert_eq!(a.deg(), 2);
+    /// ```
     pub fn deg(&self) -> u64 {
         self.deg
     }
@@ -186,6 +192,14 @@ impl Gf2Poly {
     }
 
     /// Calculates the derivative of self.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "dbf".parse().unwrap();
+    /// let b = a.derivative();
+    /// assert_eq!(b.to_string(), "455");
+    /// assert_eq!(Gf2Poly::zero().derivative(), Gf2Poly::zero());
+    /// ```
     pub fn derivative(&self) -> Self {
         const MASK: Limb = Limb::MAX / 3;
         let limbs = self.limbs().iter().map(|x| x >> 1 & MASK).collect();
@@ -199,6 +213,13 @@ impl Gf2Poly {
 
     /// Calculates the polynomial with all coefficients reversed in place.
     /// If f is of degree n, this is x^n * f(1/x).
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "dbf".parse().unwrap();
+    /// assert_eq!(a.reverse().to_string(), "fdb");
+    /// ```
+
     pub fn reverse(&self) -> Self {
         if self.is_zero() {
             return Self::zero();
@@ -252,6 +273,15 @@ impl Gf2Poly {
     }
 
     /// Calculates f mod x^n, i.e. truncates f to the n least significant bits.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let mut a: Gf2Poly = "dbf".parse().unwrap();
+    /// a.truncate_mut(7);
+    /// assert_eq!(a.to_string(), "3f");
+    /// a.truncate_mut(0);
+    /// assert_eq!(a.to_string(), "0");
+    /// ```
     pub fn truncate_mut(&mut self, n: u64) {
         if n == 0 {
             *self = Self::zero();
@@ -578,38 +608,9 @@ pub mod tests {
     }
 
     #[test]
-    fn derivative() {
-        let a: Gf2Poly = "dbf".parse().unwrap();
-        let b = a.derivative();
-        assert_eq!(b.to_string(), "455");
-        assert_eq!(Gf2Poly::zero().derivative(), Gf2Poly::zero());
-    }
-
-    #[test]
-    fn truncate() {
-        let mut a: Gf2Poly = "dbf".parse().unwrap();
-        a.truncate_mut(7);
-        assert_eq!(a.to_string(), "3f");
-        a.truncate_mut(0);
-        assert_eq!(a.to_string(), "0");
-    }
-
-    #[test]
-    fn reverse() {
-        let a: Gf2Poly = "dbf".parse().unwrap();
-        assert_eq!(a.reverse().to_string(), "fdb");
-    }
-
-    #[test]
     fn reverse_gap() {
         let a = (Gf2Poly::one() << 198u64) + (Gf2Poly::one() << 135u64);
         let trail = a.trailing_zeros().unwrap_or(0);
         assert_eq!(a.reverse().reverse() << trail, a);
-    }
-
-    #[test]
-    fn degree() {
-        let a: Gf2Poly = "3".parse().unwrap();
-        assert_eq!(a.deg(), 1);
     }
 }

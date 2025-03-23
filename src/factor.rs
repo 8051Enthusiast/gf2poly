@@ -38,6 +38,18 @@ impl Gf2Poly {
     /// Computes the square-free factorization of the polynomial.
     /// Given a polynomial f = prod_{i=0}^n {f_i}^i, gives back
     /// pairs (f_i, i) with f != 1 such that f is squarefree.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "78f314da3a4".parse().unwrap();
+    /// let result = a.square_free_factorization();
+    /// let [(a1, 1), (a2, 2), (a3, 3)] = &result[..] else {
+    ///     panic!()
+    /// };
+    /// assert_eq!(a1.to_string(), "ed");
+    /// assert_eq!(a2.to_string(), "da");
+    /// assert_eq!(a3.to_string(), "b5");
+    /// ```
     pub fn square_free_factorization(&self) -> Vec<(Gf2Poly, u64)> {
         if self.is_zero() {
             panic!("Cannot factorize zero");
@@ -50,6 +62,19 @@ impl Gf2Poly {
 
     /// Computes the distinct degree factorization of the polynomial.
     /// The input polynomial must be squarefree.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "3813c0be6".parse().unwrap();
+    /// let result = a.distinct_degree_factorization();
+    /// let [(a1, 1), (a2, 2), (a5, 5), (a12, 12)] = &result[..] else {
+    ///     panic!();
+    /// };
+    /// assert_eq!(a1.to_string(), "6");
+    /// assert_eq!(a2.to_string(), "7");
+    /// assert_eq!(a5.to_string(), "37");
+    /// assert_eq!(a12.to_string(), "1764ac5");
+    /// ```
     pub fn distinct_degree_factorization(&self) -> Vec<(Gf2Poly, u64)> {
         if self.is_zero() {
             panic!("Cannot factorize zero");
@@ -117,6 +142,19 @@ impl Gf2Poly {
         Some((common, complement))
     }
 
+    /// Takes a degree `deg` and a product of distinct irreducible
+    /// polynomials of degree `deg` and returns the individual factors.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a: Gf2Poly = "1764ac5".parse().unwrap();
+    /// let result = a.same_degree_factorization(12);
+    /// let [a1, a2] = &result[..] else {
+    ///     panic!();
+    /// };
+    /// assert_eq!(a1.to_string(), "1823");
+    /// assert_eq!(a2.to_string(), "1a63");
+    /// ```
     pub fn same_degree_factorization(&self, deg: u64) -> Vec<Gf2Poly> {
         if self.is_zero() {
             panic!("Cannot factorize zero");
@@ -163,6 +201,23 @@ impl Gf2Poly {
 
     /// Computes the factorization of the polynomial.
     /// The result is a vector of irreducible polynomials and their multiplicities.
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// // 2^2 * 3^2 * 7^2 * d * 29 * 2f * bc9
+    /// let a: Gf2Poly = "1d9247f2c".parse().unwrap();
+    /// let result = a.factor();
+    /// let [(g_d, 1), (g_29, 1), (g_2f, 1), (g_bc9, 1), (g_2, 2), (g_3, 2), (g_7, 2)] = &result[..] else  {
+    ///     panic!()
+    /// };
+    /// assert_eq!(g_d.to_string(), "d");
+    /// assert_eq!(g_29.to_string(), "29");
+    /// assert_eq!(g_2f.to_string(), "2f");
+    /// assert_eq!(g_bc9.to_string(), "bc9");
+    /// assert_eq!(g_2.to_string(), "2");
+    /// assert_eq!(g_3.to_string(), "3");
+    /// assert_eq!(g_7.to_string(), "7");
+    /// ```
     pub fn factor(&self) -> Vec<(Gf2Poly, u64)> {
         if self.is_zero() {
             panic!("Cannot factorize zero");
@@ -186,57 +241,6 @@ mod tests {
     use crate::{Gf2Poly, prop_assert_poly_eq};
     use proptest::prelude::*;
 
-    #[test]
-    fn square_free_factorization_basic() {
-        let a: Gf2Poly = "78f314da3a4".parse().unwrap();
-        let result = a.square_free_factorization();
-        let [(a1, 1), (a2, 2), (a3, 3)] = &result[..] else {
-            panic!()
-        };
-        assert_eq!(a1.to_string(), "ed");
-        assert_eq!(a2.to_string(), "da");
-        assert_eq!(a3.to_string(), "b5");
-    }
-
-    #[test]
-    fn distinct_degree_factorization_basic() {
-        let a: Gf2Poly = "3813c0be6".parse().unwrap();
-        let result = a.distinct_degree_factorization();
-        let [(a1, 1), (a2, 2), (a5, 5), (a12, 12)] = &result[..] else {
-            panic!();
-        };
-        assert_eq!(a1.to_string(), "6");
-        assert_eq!(a2.to_string(), "7");
-        assert_eq!(a5.to_string(), "37");
-        assert_eq!(a12.to_string(), "1764ac5");
-    }
-
-    #[test]
-    fn same_degree_factorization_basic() {
-        let a: Gf2Poly = "1764ac5".parse().unwrap();
-        let result = a.same_degree_factorization(12);
-        let [a1, a2] = &result[..] else {
-            panic!();
-        };
-        assert_eq!(a1.to_string(), "1823");
-        assert_eq!(a2.to_string(), "1a63");
-    }
-
-    #[test]
-    fn factor_basic() {
-        let a: Gf2Poly = "1d9247f2c".parse().unwrap();
-        let result = a.factor();
-        let [(g_d, 1), (g_29, 1), (g_2f, 1), (g_bc9, 1), (g_2, 2), (g_3, 2), (g_7, 2)] = &result[..] else  {
-            panic!()
-        };
-        assert_eq!(g_d.to_string(), "d");
-        assert_eq!(g_29.to_string(), "29");
-        assert_eq!(g_2f.to_string(), "2f");
-        assert_eq!(g_bc9.to_string(), "bc9");
-        assert_eq!(g_2.to_string(), "2");
-        assert_eq!(g_3.to_string(), "3");
-        assert_eq!(g_7.to_string(), "7");
-    }
 
     proptest! {
         #[test]
