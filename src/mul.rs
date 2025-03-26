@@ -66,6 +66,22 @@ impl core::ops::Mul<Gf2Poly> for Gf2Poly {
     }
 }
 
+impl core::ops::Mul<Gf2Poly> for &Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn mul(self, rhs: Gf2Poly) -> Self::Output {
+        self * &rhs
+    }
+}
+
+impl core::ops::Mul<&Gf2Poly> for Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn mul(self, rhs: &Gf2Poly) -> Self::Output {
+        &self * rhs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::prop_assert_poly_eq;

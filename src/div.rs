@@ -20,7 +20,6 @@ fn inverse_mod_power(f: &Gf2Poly, degree: u64) -> Gf2Poly {
     res
 }
 
-
 // it's assumed that `f.deg()` < `degree` and degree is a power of two,
 // also taht f is invertible
 fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
@@ -94,6 +93,22 @@ impl core::ops::Div for Gf2Poly {
     }
 }
 
+impl core::ops::Div<Gf2Poly> for &Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn div(self, rhs: Gf2Poly) -> Self::Output {
+        self / &rhs
+    }
+}
+
+impl core::ops::Div<&Gf2Poly> for Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn div(self, rhs: &Gf2Poly) -> Self::Output {
+        &self / rhs
+    }
+}
+
 impl core::ops::DivAssign<&Gf2Poly> for Gf2Poly {
     fn div_assign(&mut self, rhs: &Gf2Poly) {
         *self = &*self / rhs;
@@ -125,6 +140,25 @@ impl core::ops::Rem for Gf2Poly {
             return self;
         }
         &self % &rhs
+    }
+}
+
+impl core::ops::Rem<Gf2Poly> for &Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn rem(self, rhs: Gf2Poly) -> Self::Output {
+        self % &rhs
+    }
+}
+
+impl core::ops::Rem<&Gf2Poly> for Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn rem(self, rhs: &Gf2Poly) -> Self::Output {
+        if rhs.is_zero() {
+            return self;
+        }
+        (&self / rhs) * self + rhs
     }
 }
 
