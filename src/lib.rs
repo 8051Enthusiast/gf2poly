@@ -25,6 +25,11 @@ type LimbStorage = Vec<Limb>;
 #[cfg(not(debug_assertions))]
 type LimbStorage = smallvec::SmallVec<[Limb; 2]>;
 
+#[cfg(debug_assertions)]
+use alloc::vec as limbs;
+#[cfg(not(debug_assertions))]
+use smallvec::smallvec as limbs;
+
 const BITS: u64 = Limb::BITS as u64;
 
 const HALF_MASK: Limb = alternating_mask(BITS.ilog2() - 1);
@@ -214,6 +219,12 @@ impl Gf2Poly {
     }
 
     /// Returns x^n
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let a = Gf2Poly::x_to_the_power_of(3);
+    /// assert_eq!(a.to_string(), "8");
+    /// ```
     pub fn x_to_the_power_of(n: u64) -> Self {
         let mut x = Gf2Poly::zero();
         x.set(n);
@@ -445,7 +456,7 @@ impl Gf2Poly {
             return Self::one();
         }
         let len = limbs_for_deg(deg);
-        let mut limbs = alloc::vec![0; len];
+        let mut limbs = limbs![0; len];
         rng.fill(limbs.as_mut_slice());
         let last = &mut limbs[len - 1];
         let deg_part = deg % BITS;
@@ -643,7 +654,7 @@ pub mod tests {
             let b = Gf2Poly::from_bytes(&bytes);
             prop_assert!(bytes.last() != Some(&0));
             prop_assert_eq!(b.to_bytes(), bytes);
-            prop_assert_poly_eq!(a, b); 
+            prop_assert_poly_eq!(a, b);
         }
     }
 
