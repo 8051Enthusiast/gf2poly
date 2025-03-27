@@ -158,7 +158,7 @@ impl core::ops::Rem<&Gf2Poly> for Gf2Poly {
         if rhs.is_zero() {
             return self;
         }
-        (&self / rhs) * self + rhs
+        (&self / rhs) * rhs + self
     }
 }
 
