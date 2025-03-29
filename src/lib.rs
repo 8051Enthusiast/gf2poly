@@ -14,6 +14,9 @@ mod mul;
 mod shift;
 #[cfg(test)]
 mod test_util;
+
+pub use modulo::Gf2PolyMod;
+
 use alloc::vec::Vec;
 use core::{fmt::Display, str::FromStr};
 use rand::Rng;
@@ -443,7 +446,7 @@ impl Gf2Poly {
         if self.is_zero() {
             return (Self::zero(), Self::zero());
         }
-        let hi = self.clone() >> n;
+        let hi = self >> n;
         let lo = self.truncated(n);
         (hi, lo)
     }

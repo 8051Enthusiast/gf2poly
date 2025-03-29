@@ -55,8 +55,8 @@ fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
 
     // we recursively run the hgcd on just the upper halfs, since
     // it turns out the lower halfs don't affect the resulting matrix here
-    let mut a0_hi = a0.clone() >> halfdeg;
-    let mut a1_hi = a1.clone() >> halfdeg;
+    let mut a0_hi = &*a0 >> halfdeg;
+    let mut a1_hi = &*a1 >> halfdeg;
     let first_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut a0_hi, &mut a1_hi);
     drop((a0_hi, a1_hi));
     // while the matrix is the same when operating on the higher halfs,
@@ -77,8 +77,8 @@ fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     let quarterdeg = halfdeg / 2;
     // we do the same as above, but instead of using the (deg / 2)..deg part,
     // we use the (deg / 4)..(deg * 3/4) part
-    let mut b1_hi = b1.clone() >> quarterdeg;
-    let mut b2_hi = b2.clone() >> quarterdeg;
+    let mut b1_hi = &b1 >> quarterdeg;
+    let mut b2_hi = &b2 >> quarterdeg;
     let second_matrix = hgcd::<Gf2Poly2x2Matrix>(&mut b1_hi, &mut b2_hi);
     drop((b1_hi, b2_hi));
     let (res_a0, res_a1) = second_matrix.apply(&b1, &b2);

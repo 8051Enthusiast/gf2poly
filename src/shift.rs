@@ -175,7 +175,7 @@ impl Gf2Poly {
         let bit_shift = lo % BITS;
         let limb_start = (lo / BITS) as usize;
         let limb_end = (hi / BITS + 1) as usize;
-        let limb_count = limbs_for_deg(hi - lo) as usize;
+        let limb_count = limbs_for_deg(hi - lo);
 
         let mut limbs;
         if bit_shift == 0 {
