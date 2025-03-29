@@ -343,9 +343,7 @@ impl Gf2Poly {
         if n == 0 {
             return Self::zero();
         }
-        let mut cpy = self.clone();
-        cpy.truncate_mut(n);
-        cpy
+        self.subrange(..n)
     }
 
     /// Calculates self^n, the nth power of self.

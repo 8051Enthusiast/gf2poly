@@ -1,16 +1,42 @@
+use core::ops::Bound;
+use core::ops::RangeBounds;
+
 use crate::BITS;
+use crate::LimbStorage;
+use crate::limbs_for_deg;
 
 use crate::Gf2Poly;
 
-impl core::ops::Shl<u64> for Gf2Poly {
-    type Output = Self;
+macro_rules! shift_impl {
+    ($op:tt, $trait:ident, $fun:ident, $impl:ty, $($t:ty),+) => {
+        $(
+            impl core::ops::$trait<$t> for $impl {
+                type Output = Gf2Poly;
 
-    fn shl(mut self, rhs: u64) -> Self::Output {
-        if rhs == 0 {
-            return self;
-        }
-        if self.is_zero() {
-            return self;
+                fn $fun(self, rhs: $t) -> Self::Output {
+                    self $op rhs as u64
+                }
+            }
+        )+
+    };
+}
+
+macro_rules! shift_assign_impl {
+    ($op:tt, $trait:ident, $fun:ident, $($t:ty),+) => {
+        $(
+            impl core::ops::$trait<$t> for Gf2Poly {
+                fn $fun(&mut self, rhs: $t) {
+                    *self $op rhs as u64;
+                }
+            }
+        )+
+    };
+}
+
+impl core::ops::ShlAssign<u64> for Gf2Poly {
+    fn shl_assign(&mut self, rhs: u64) {
+        if rhs == 0 || self.is_zero() {
+            return;
         }
         let bit_shift = rhs % BITS;
         let Ok(limb_shift) = usize::try_from(rhs / BITS) else {
@@ -40,88 +66,35 @@ impl core::ops::Shl<u64> for Gf2Poly {
                 self.limbs.pop();
             }
         }
+    }
+}
+
+impl core::ops::Shl<u64> for Gf2Poly {
+    type Output = Self;
+
+    fn shl(mut self, rhs: u64) -> Self::Output {
+        self <<= rhs;
         self
     }
 }
 
-impl core::ops::Shl<u32> for Gf2Poly {
-    type Output = Self;
+shift_impl!(<<, Shl, shl, Gf2Poly, usize, u32, u16, u8);
+shift_assign_impl!(<<=, ShlAssign, shl_assign, usize, u32, u16, u8);
 
-    fn shl(self, rhs: u32) -> Self::Output {
-        self << rhs as u64
-    }
-}
-
-impl core::ops::Shl<usize> for Gf2Poly {
-    type Output = Self;
-
-    fn shl(self, rhs: usize) -> Self::Output {
-        self << rhs as u64
-    }
-}
-
-impl core::ops::Shl<u16> for Gf2Poly {
-    type Output = Self;
-
-    fn shl(self, rhs: u16) -> Self::Output {
-        self << rhs as u64
-    }
-}
-
-impl core::ops::Shl<u8> for Gf2Poly {
-    type Output = Self;
-
-    fn shl(self, rhs: u8) -> Self::Output {
-        self << rhs as u64
-    }
-}
-
-impl core::ops::ShlAssign<u64> for Gf2Poly {
-    fn shl_assign(&mut self, rhs: u64) {
-        *self = core::mem::take(self) << rhs;
-    }
-}
-
-impl core::ops::ShlAssign<u32> for Gf2Poly {
-    fn shl_assign(&mut self, rhs: u32) {
-        *self = core::mem::take(self) << rhs;
-    }
-}
-
-impl core::ops::ShlAssign<usize> for Gf2Poly {
-    fn shl_assign(&mut self, rhs: usize) {
-        *self = core::mem::take(self) << rhs;
-    }
-}
-
-impl core::ops::ShlAssign<u16> for Gf2Poly {
-    fn shl_assign(&mut self, rhs: u16) {
-        *self = core::mem::take(self) << rhs;
-    }
-}
-
-impl core::ops::ShlAssign<u8> for Gf2Poly {
-    fn shl_assign(&mut self, rhs: u8) {
-        *self = core::mem::take(self) << rhs;
-    }
-}
-
-impl core::ops::Shr<u64> for Gf2Poly {
-    type Output = Self;
-
-    fn shr(mut self, rhs: u64) -> Self::Output {
-        if rhs == 0 {
-            return self;
+impl core::ops::ShrAssign<u64> for Gf2Poly {
+    fn shr_assign(&mut self, rhs: u64) {
+        if rhs == 0 || self.is_zero() {
+            return;
         }
-        if self.is_zero() {
-            return self;
-        }
+
         let bit_shift = rhs % BITS;
         let Ok(limb_shift) = usize::try_from(rhs / BITS) else {
-            return Self::zero();
+            *self = Self::zero();
+            return;
         };
         let Some(new_deg) = self.deg.checked_sub(rhs) else {
-            return Self::zero();
+            *self = Self::zero();
+            return;
         };
         let limb_size = self.limbs().len();
 
@@ -131,8 +104,8 @@ impl core::ops::Shr<u64> for Gf2Poly {
             self.deg = new_deg;
         } else {
             for i in limb_shift..limb_size {
-                let src = &mut self.limbs[i];
-                let src_val = *src;
+                let src = self.limbs[i];
+                let src_val = src;
                 if let Some(target) = self.limbs.get_mut((i - limb_shift).wrapping_sub(1)) {
                     *target |= src_val << (BITS - bit_shift);
                 };
@@ -143,71 +116,109 @@ impl core::ops::Shr<u64> for Gf2Poly {
                 self.limbs.pop();
             }
         }
+    }
+}
+
+impl core::ops::Shr<u64> for Gf2Poly {
+    type Output = Self;
+
+    fn shr(mut self, rhs: u64) -> Self::Output {
+        self >>= rhs;
         self
     }
 }
 
-impl core::ops::Shr<u32> for Gf2Poly {
-    type Output = Self;
+shift_impl!(>>, Shr, shr, Gf2Poly, usize, u32, u16, u8);
+shift_assign_impl!(>>=, ShrAssign, shr_assign, usize, u32, u16, u8);
 
-    fn shr(self, rhs: u32) -> Self::Output {
-        self >> rhs as u64
+impl Gf2Poly {
+    fn normalize_range<T: RangeBounds<u64>>(&self, range: T) -> Option<(u64, u64)> {
+        if self.is_zero() {
+            return None;
+        }
+
+        let lo = match range.start_bound() {
+            Bound::Included(n) => *n,
+            Bound::Excluded(n) => n.checked_add(1)?,
+            Bound::Unbounded => 0,
+        };
+
+        let hi = match range.end_bound() {
+            Bound::Included(n) => *n,
+            Bound::Excluded(n) => n.checked_sub(1)?,
+            Bound::Unbounded => self.deg(),
+        };
+
+        let hi = self.deg().min(hi);
+
+        if lo > hi {
+            return None;
+        }
+
+        Some((lo, hi))
+    }
+
+    /// Creates a copy of the bit range given in `range`.
+    ///
+    /// ## Example
+    /// ```rust
+    /// # use gf2poly::Gf2Poly;
+    /// let p: Gf2Poly = "123456789".parse().unwrap();
+    /// let subrange = p.subrange(12..25);
+    /// assert_eq!(subrange.to_string(), "1456");
+    /// ```
+    pub fn subrange<T: RangeBounds<u64>>(&self, range: T) -> Gf2Poly {
+        let Some((lo, hi)) = self.normalize_range(range) else {
+            return Gf2Poly::zero();
+        };
+
+        let bit_shift = lo % BITS;
+        let limb_start = (lo / BITS) as usize;
+        let limb_end = (hi / BITS + 1) as usize;
+        let limb_count = limbs_for_deg(hi - lo) as usize;
+
+        let mut limbs;
+        if bit_shift == 0 {
+            limbs = LimbStorage::from(&self.limbs()[limb_start..limb_end]);
+        } else {
+            limbs = LimbStorage::with_capacity(limb_count);
+            for i in limb_start..limb_end {
+                let src = self.limbs[i];
+                if let Some(target) = limbs.get_mut((i - limb_start).wrapping_sub(1)) {
+                    *target |= src << (BITS - bit_shift);
+                };
+                if limbs.len() < limb_count {
+                    limbs.push(src >> bit_shift);
+                }
+            }
+        }
+
+        let highest_bit_offset = (hi - lo) % BITS;
+        *limbs.last_mut().unwrap() &= (1 << highest_bit_offset) | ((1 << highest_bit_offset) - 1);
+        Gf2Poly::from_limb_storage(limbs)
     }
 }
 
-impl core::ops::Shr<usize> for Gf2Poly {
-    type Output = Self;
+impl core::ops::Shr<u64> for &Gf2Poly {
+    type Output = Gf2Poly;
 
-    fn shr(self, rhs: usize) -> Self::Output {
-        self >> rhs as u64
+    fn shr(self, rhs: u64) -> Self::Output {
+        self.subrange(rhs..)
     }
 }
 
-impl core::ops::Shr<u16> for Gf2Poly {
-    type Output = Self;
+shift_impl!(>>, Shr, shr, &Gf2Poly, usize, u32, u16, u8);
 
-    fn shr(self, rhs: u16) -> Self::Output {
-        self >> rhs as u64
+impl core::ops::Shl<u64> for &Gf2Poly {
+    type Output = Gf2Poly;
+
+    fn shl(self, rhs: u64) -> Self::Output {
+        let copy: Gf2Poly = self.clone();
+        copy << rhs
     }
 }
 
-impl core::ops::Shr<u8> for Gf2Poly {
-    type Output = Self;
-
-    fn shr(self, rhs: u8) -> Self::Output {
-        self >> rhs as u64
-    }
-}
-
-impl core::ops::ShrAssign<u64> for Gf2Poly {
-    fn shr_assign(&mut self, rhs: u64) {
-        *self = core::mem::take(self) >> rhs;
-    }
-}
-
-impl core::ops::ShrAssign<u32> for Gf2Poly {
-    fn shr_assign(&mut self, rhs: u32) {
-        *self = core::mem::take(self) >> rhs;
-    }
-}
-
-impl core::ops::ShrAssign<usize> for Gf2Poly {
-    fn shr_assign(&mut self, rhs: usize) {
-        *self = core::mem::take(self) >> rhs;
-    }
-}
-
-impl core::ops::ShrAssign<u16> for Gf2Poly {
-    fn shr_assign(&mut self, rhs: u16) {
-        *self = core::mem::take(self) >> rhs;
-    }
-}
-
-impl core::ops::ShrAssign<u8> for Gf2Poly {
-    fn shr_assign(&mut self, rhs: u8) {
-        *self = core::mem::take(self) >> rhs;
-    }
-}
+shift_impl!(<<, Shl, shl, &Gf2Poly, usize, u32, u16, u8);
 
 #[cfg(test)]
 mod tests {
@@ -261,6 +272,30 @@ mod tests {
             prop_assume!(!a.is_zero());
             let deg = a.deg();
             prop_assert_poly_eq!(a >> deg, Gf2Poly::one());
+        }
+
+        #[test]
+        fn shift_impl_same(a: Gf2Poly, n in 0u32..256) {
+            prop_assert_poly_eq!(a.clone() >> n, &a >> n);
+            prop_assert_poly_eq!(a.clone() << n, &a << n);
+        }
+
+        #[test]
+        fn split_and_recombine(a: Gf2Poly, idx1 in 0..128u64, idx2 in 0..128u64) {
+            prop_assume!(!a.is_constant());
+            let mut idx1 = idx1 % a.deg();
+            let mut idx2 = idx2 % a.deg();
+            if idx2 < idx1 {
+                core::mem::swap(&mut idx1, &mut idx2);
+            }
+
+            let lo = a.subrange(..idx1);
+            let mid = a.subrange(idx1..idx2);
+            let hi = a.subrange(idx2..=a.deg());
+
+            let recombined = lo + mid * Gf2Poly::x_to_the_power_of(idx1) + hi * Gf2Poly::x_to_the_power_of(idx2);
+
+            prop_assert_poly_eq!(a, recombined);
         }
     }
 }
