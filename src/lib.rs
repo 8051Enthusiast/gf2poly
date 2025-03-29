@@ -167,7 +167,7 @@ impl Gf2Poly {
     /// Converts a slice of bytes into a polynomial, with least significant byte first.
     pub fn from_bytes(bytes: &[u8]) -> Gf2Poly {
         let limb_size = core::mem::size_of::<Limb>();
-        let mut limbs = LimbStorage::with_capacity((bytes.len() + limb_size - 1) / limb_size);
+        let mut limbs = LimbStorage::with_capacity(bytes.len().div_ceil(limb_size));
         for chunk in bytes.chunks(core::mem::size_of::<Limb>()) {
             let mut limb = 0;
             for (i, &byte) in chunk.iter().enumerate() {

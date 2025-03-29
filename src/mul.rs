@@ -1,7 +1,7 @@
 use super::Gf2Poly;
 use super::Limb;
 use crate::LimbStorage;
-use crate::deg;
+use crate::BITS;
 
 unsafe extern "C" {
     fn gf2x_mul(
@@ -40,14 +40,11 @@ impl core::ops::Mul<&Gf2Poly> for &Gf2Poly {
             _ => panic!("Error while multiplying gf2 polynomials"),
         }
 
+        let deg = self.deg() + rhs.deg();
         unsafe {
-            limbs.set_len(capacity);
-        }
-        if matches!(limbs.last(), Some(0)) {
-            limbs.pop();
+            limbs.set_len((deg / BITS + 1) as usize);
         }
 
-        let deg = deg(&limbs);
         Gf2Poly { limbs, deg }
     }
 }

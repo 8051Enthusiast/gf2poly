@@ -1,6 +1,41 @@
-use crate::Gf2Poly;
+use crate::{BITS, Gf2Poly, Limb, limbs};
 // the division algorithm here is described in
 // http://people.csail.mit.edu/madhu/ST12/scribe/lect06.pdf
+
+// naive algorithm for computing f^-1 mod x^8 for the lookup table
+const fn const_byte_inverse(orig: u8) -> u8 {
+    let mut product = orig;
+    let mut result = 1;
+    let mut i = 1;
+    while i < 8 {
+        if (product >> i) & 1 != 0 {
+            product ^= orig << i;
+            result |= 1 << i;
+        }
+        i += 1;
+    }
+    result
+}
+
+const BYTE_INVERSE: [Limb; 128] = {
+    let mut res = [0; 128];
+    let mut i = 0u8;
+    while i < 128 {
+        res[i as usize] = const_byte_inverse(2 * i + 1) as Limb;
+        i += 1;
+    }
+    res
+};
+
+const BYTE_DEG: [u64; 128] = {
+    let mut res = [0; 128];
+    let mut i = 0;
+    while i < 128 {
+        res[i] = BITS - BYTE_INVERSE[i].leading_zeros() as u64 - 1;
+        i += 1;
+    }
+    res
+};
 
 // this calculates f^-1 mod x^degree, which is needed for the fast
 // division algorithm.
@@ -13,34 +48,40 @@ fn inverse_mod_power(f: &Gf2Poly, degree: u64) -> Gf2Poly {
     if !f.eval(false) {
         panic!("f may not be divisible by x!");
     }
-    let power_of_two_degree = degree.next_power_of_two();
-    let reduced = f.truncated(power_of_two_degree);
-    let mut res = inverse_mod_power_impl(&reduced, power_of_two_degree);
+    let reduced = f.truncated(degree);
+    let mut res = inverse_mod_power_impl(&reduced, degree);
     res.truncate_mut(degree);
     res
 }
 
-// it's assumed that `f.deg()` < `degree` and degree is a power of two,
-// also taht f is invertible
+// it's assumed that `f.deg()` < `degree` and that f is invertible
 fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
-    if degree == 1 {
-        return Gf2Poly::one();
+    if degree <= 8 {
+        let half = (f.limbs()[0] / 2) as usize;
+        let inverse = BYTE_INVERSE[half];
+        let deg = BYTE_DEG[half];
+        return Gf2Poly {
+            deg,
+            limbs: limbs![inverse],
+        };
     }
 
-    // we split f into the halves lo and hi so that f = lo + hi * x^hdeg
-    let hdeg = degree / 2;
+    let hdeg = degree.div_ceil(2);
     let lo = f.truncated(hdeg);
     let lo_inv = inverse_mod_power_impl(&lo, hdeg);
-    // the product lo * lo_inv will be unit_hi * x^hdeg + 1 since the lower part has to
-    // be lo * lo^-1 = 1 mod x^hdeg.
-    let unit_hi = (&lo * &lo_inv) >> hdeg;
-    let hi = f.clone() >> hdeg;
-    let mut mul = &hi * &lo_inv;
-    mul.truncate_mut(hdeg);
-    mul += &unit_hi;
-    let mut hi_inv = &lo_inv * &mul;
-    hi_inv.truncate_mut(hdeg);
-    (hi_inv << hdeg) + lo_inv
+    // let half = x^hdeg, and let `lo` be f mod half, and lo_inv the inverse of lo mod half.
+    // say hi_inv is such that inv = hi_inv * half + lo_inv is the inverse of f mod x^degree. then 
+    // we equivalently have lo_inv = inv + hi_inv * half. let's calculate (modulo x^degree)
+    // lo_inv * f = (inv + hi_inv * half) * f = 1 + half * hi_inv * f = 1 + half * hi_inv * lo (mod x^degree)
+    // (note that we can turn the half * f into half * lo because the x^hdeg shifts the high bits of f out)
+    // 
+    // multiplying with lo_inv again we finally get:
+    // lo_inv * (1 + half * hi_inv * lo) = lo_inv + half * lo_inv * lo * hi_inv = lo_inv + half * hi_inv = inv (mod x^degree)
+    // 
+    // also note that we get .square() basically for free in char 2.
+    let mut inv = f * lo_inv.square();
+    inv.truncate_mut(degree);
+    inv
 }
 
 impl Gf2Poly {

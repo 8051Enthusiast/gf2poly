@@ -49,7 +49,7 @@ fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
 
     // note that for degree < 4, we don't actually make progress
     // using this function, so we have to switch implementation
-    if a0.deg() < 4 {
+    if a1.deg() < 256 {
         return M::projection(iter_hgcd(a0, a1));
     }
 
