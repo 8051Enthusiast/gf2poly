@@ -1,3 +1,5 @@
+use core::borrow::Borrow;
+
 use crate::Gf2Poly;
 
 impl Gf2Poly {
@@ -94,39 +96,42 @@ impl Gf2Poly {
 
 /// This type precalculates the factor for Barrett reduction, which can be used to
 /// speed up calculations using the same modulus.
-pub struct Gf2PolyMod {
-    modulus: Gf2Poly,
+/// This takes a Borrow<Gf2Poly>, which can for example be a Gf2Poly, a &Gf2Poly or
+/// an Arc<Gf2Poly>
+pub struct Gf2PolyMod<T: Borrow<Gf2Poly>> {
+    modulus: T,
     barrett_reducer: Gf2Poly,
 }
 
-impl Gf2PolyMod {
+impl<T: Borrow<Gf2Poly>> Gf2PolyMod<T> {
     /// Constructs a new [Gf2PolyMod] and precalculates data for faster remaindering.
     /// Panics if `modulus` is zero.
-    pub fn new(modulus: Gf2Poly) -> Self {
-        if modulus.is_zero() {
+    pub fn new(modulus: T) -> Self {
+        if modulus.borrow().is_zero() {
             panic!("Zero modulus is not allowed.");
         }
 
-        let barrett_reducer = Gf2Poly::x_to_the_power_of(2 * modulus.deg()) / &modulus;
+        let barrett_reducer =
+            Gf2Poly::x_to_the_power_of(2 * modulus.borrow().deg()) / modulus.borrow();
         Gf2PolyMod {
             modulus,
             barrett_reducer,
         }
     }
 
-    /// Returns the degree of the modulus.
-    pub fn deg(&self) -> u64 {
-        self.modulus.deg()
-    }
-
     /// Returns a reference to the original modulus this [Gf2PolyMod] was constructed with.
     pub fn modulus(&self) -> &Gf2Poly {
-        &self.modulus
+        &self.modulus.borrow()
     }
 
     /// Returns the modulus value this [Gf2PolyMod] was constructed with.
-    pub fn modulus_value(self) -> Gf2Poly {
+    pub fn modulus_value(self) -> T {
         self.modulus
+    }
+
+    /// Returns the degree of the modulus.
+    pub fn deg(&self) -> u64 {
+        self.modulus().deg()
     }
 
     fn barrett_step(&self, upper_half: Gf2Poly) -> Gf2Poly {
@@ -136,11 +141,11 @@ impl Gf2PolyMod {
 
     fn barrett_remainder(&self, poly: &Gf2Poly) -> Gf2Poly {
         let quotient = self.barrett_step(poly >> self.deg());
-        poly - quotient * &self.modulus
+        poly - quotient * self.modulus()
     }
 
     /// Calculates the remainder of `elem` when divided by `self`.
-    /// 
+    ///
     /// ## Example
     /// ```rust
     /// # use gf2poly::{Gf2Poly, Gf2PolyMod};
@@ -154,7 +159,7 @@ impl Gf2PolyMod {
             return elem.clone();
         }
 
-        if self.modulus.is_one() {
+        if self.modulus().is_one() {
             return Gf2Poly::zero();
         }
 
@@ -197,13 +202,13 @@ impl Gf2PolyMod {
     /// Convenience method for [Gf2Poly::mod_inv];
     /// Is not more efficient than using self.modulus() directly.
     pub fn inverse(&self, elem: &Gf2Poly) -> Option<Gf2Poly> {
-        self.modulus.mod_inv(elem)
+        self.modulus().mod_inv(elem)
     }
 
     /// Convenience method for [Gf2Poly::mod_div].
     /// Is not more efficient than using self.modulus() directly.
     pub fn div(&self, lhs: &Gf2Poly, rhs: &Gf2Poly) -> Option<Gf2Poly> {
-        self.modulus.mod_div(lhs, rhs)
+        self.modulus().mod_div(lhs, rhs)
     }
 }
 
@@ -226,7 +231,7 @@ mod tests {
         fn modulus_mul(modulo: Gf2Poly, a: Gf2Poly, b: Gf2Poly) {
             prop_assume!(!modulo.is_zero());
             let res1 = modulo.mod_mul(&a, &b);
-            let modulus = Gf2PolyMod::new(modulo.clone());
+            let modulus = Gf2PolyMod::new(&modulo);
             let res2 = modulus.mul(&a, &b);
             prop_assert_poly_eq!(res1, res2);
         }

@@ -1,6 +1,6 @@
 use rand::SeedableRng;
 
-use crate::Gf2Poly;
+use crate::{Gf2Poly, Gf2PolyMod};
 use alloc::vec::Vec;
 use alloc::vec;
 
@@ -102,6 +102,7 @@ impl Gf2Poly {
 
         let mut current;
         let mut current_ref = self;
+        let mut modulus = Gf2PolyMod::new(current_ref);
         // hypersquare is here x^(2^k) mod current_ref for the kth iteration of the loop (starting from 1)
         let mut hypersquare = Gf2Poly::x();
         let mut degree = 0;
@@ -113,7 +114,7 @@ impl Gf2Poly {
                 factors.push((current_ref.clone(), degree));
                 break;
             }
-            hypersquare = current_ref.mod_square(&hypersquare);
+            hypersquare = modulus.square(&hypersquare);
 
             // the `product` variable `x^(2^k) + x` is the product of all polynomials whose
             // degree divides `k`
@@ -130,6 +131,7 @@ impl Gf2Poly {
             // in iteration 2*k
             current = current_ref / &common;
             current_ref = &current;
+            modulus = Gf2PolyMod::new(current_ref);
             factors.push((common, degree));
         }
 
