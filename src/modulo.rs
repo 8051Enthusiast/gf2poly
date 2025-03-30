@@ -139,9 +139,14 @@ impl<T: Borrow<Gf2Poly>> Gf2PolyMod<T> {
         (upper_half * &self.barrett_reducer) >> self.deg()
     }
 
-    fn barrett_remainder(&self, poly: &Gf2Poly) -> Gf2Poly {
+    fn barrett_divmod(&self, poly: &Gf2Poly) -> (Gf2Poly, Gf2Poly) {
         let quotient = self.barrett_step(poly >> self.deg());
-        poly - quotient * self.modulus()
+        let remainder = poly - &quotient * self.modulus();
+        (quotient, remainder)
+    }
+
+    fn barrett_remainder(&self, poly: &Gf2Poly) -> Gf2Poly {
+        self.barrett_divmod(poly).1
     }
 
     /// Calculates the remainder of `elem` when divided by `self`.
@@ -180,6 +185,44 @@ impl<T: Borrow<Gf2Poly>> Gf2PolyMod<T> {
         }
 
         remainder
+    }
+
+    /// Calculates the quotient and remainder of `elem` when divided by `self`.
+    pub fn divmod(&self, elem: &Gf2Poly) -> (Gf2Poly, Gf2Poly) {
+        if elem.deg() < self.deg() {
+            return (Gf2Poly::zero(), elem.clone());
+        }
+
+        if self.modulus().is_one() {
+            return (elem.clone(), Gf2Poly::zero());
+        }
+
+        let step = self.deg();
+        if elem.deg() < 2 * step {
+            let quotient = self.barrett_step(elem >> self.deg());
+            let remainder = elem - &quotient * self.modulus();
+            return (quotient, remainder);
+        }
+
+        let last_segment = elem.deg() / step;
+        let range = |segment: u64| segment * step..(segment + 1) * step;
+        let mut remainder = elem.subrange(range(last_segment));
+        let mut quotient = Gf2Poly::zero();
+
+        for segment in (0..last_segment).rev() {
+            remainder <<= step;
+            remainder += elem.subrange(range(segment));
+            let (q, r) = self.barrett_divmod(&remainder);
+            remainder = r;
+            quotient.fused_shl_add(&q, segment * step);
+        }
+
+        (quotient, remainder)
+    }
+
+    /// Calculates the quotient of `elem` when divided by `self`.
+    pub fn quotient(&self, elem: &Gf2Poly) -> Gf2Poly {
+        self.divmod(elem).0
     }
 
     /// Performs multiplication of `lhs` with `rhs` modulo `self`.
@@ -252,6 +295,15 @@ mod tests {
             let modulus = Gf2PolyMod::new(modulus);
             let res1 = modulus.remainder(&elem);
             let res2 = elem % &modulus.modulus;
+            prop_assert_poly_eq!(res1, res2);
+        }
+
+        #[test]
+        fn modulus_divisor(modulus: Gf2Poly, elem: Gf2Poly) {
+            prop_assume!(!modulus.is_zero());
+            let modulus = Gf2PolyMod::new(modulus);
+            let res1 = modulus.quotient(&elem);
+            let res2 = elem / &modulus.modulus;
             prop_assert_poly_eq!(res1, res2);
         }
 

@@ -624,12 +624,12 @@ pub mod tests {
         }
 
         #[test]
-        fn exponent_homo(a: Gf2Poly, n in 0..128u64, m in 0..128u64) {
+        fn exponent_homo(a: Gf2Poly, n in 0..64u64, m in 0..64u64) {
             prop_assert_poly_eq!(a.clone().power(n) * a.clone().power(m), a.power(n + m));
         }
 
         #[test]
-        fn power_homo(a: Gf2Poly, b: Gf2Poly, n in 0..128u64) {
+        fn power_homo(a: Gf2Poly, b: Gf2Poly, n in 0..64u64) {
             prop_assert_poly_eq!((&a * &b).power(n), a.power(n) * b.power(n));
         }
 

@@ -149,12 +149,19 @@ impl Gf2Poly {
         if rhs.is_zero() {
             panic!("Division by zero.");
         }
+
         if self.is_zero() || self.deg() < rhs.deg() {
             return Gf2Poly::zero();
         }
+
+        if rhs.is_one() {
+            return self.clone();
+        }
+
         if self.deg() == rhs.deg() {
             return Gf2Poly::one();
         }
+
         if let ([lhs_limb], [rhs_limb]) = (self.limbs(), rhs.limbs()) {
             let lhs_deg = self.deg();
             let rhs_deg = rhs.deg();
@@ -164,6 +171,7 @@ impl Gf2Poly {
                 limbs: limbs![result],
             };
         }
+
         self.div_rev(rhs)
     }
 }
@@ -219,12 +227,18 @@ impl core::ops::Rem for &Gf2Poly {
         if rhs.is_zero() {
             return self.clone();
         }
+
+        if rhs.is_one() {
+            return Gf2Poly::zero();
+        }
+
         if let ([lhs_limb], [rhs_limb]) = (self.limbs(), rhs.limbs()) {
             let lhs_deg = self.deg();
             let rhs_deg = rhs.deg();
             let result = rem_base(*lhs_limb, *rhs_limb, lhs_deg as u8, rhs_deg as u8);
             return Gf2Poly::from_limbs(&[result]);
         }
+
         self + rhs * &(self / rhs)
     }
 }

@@ -197,6 +197,43 @@ impl Gf2Poly {
         *limbs.last_mut().unwrap() &= (1 << highest_bit_offset) | ((1 << highest_bit_offset) - 1);
         Gf2Poly::from_limb_storage(limbs)
     }
+
+    /// Equivalent to *self += rhs << shift, but more efficient
+    /// since rhs << shift is not calculated explicitely.
+    pub fn fused_shl_add(&mut self, rhs: &Gf2Poly, shift: u64) {
+        if rhs.is_zero() {
+            return;
+        }
+        let bit_shift = shift % BITS;
+        let Ok(limb_shift) = usize::try_from(shift / BITS) else {
+            panic!("Left shift of {rhs} is too big")
+        };
+        let shift_deg = rhs
+            .deg
+            .checked_add(shift)
+            .expect("Left shift would overflow degree");
+        let new_deg = shift_deg.max(self.deg());
+        self.resize_to_deg_unnormalized(new_deg);
+
+        if bit_shift == 0 {
+            for (self_limb, rhs_limb) in self.limbs[limb_shift..].iter_mut().zip(rhs.limbs.iter()) {
+                *self_limb ^= *rhs_limb;
+            }
+        } else {
+            let rhs_count = rhs.limbs.len();
+            for i in (0..rhs_count).rev() {
+                let src = rhs.limbs[i];
+                if let Some(target) = self.limbs.get_mut(limb_shift + i + 1) {
+                    *target ^= src >> (BITS - bit_shift);
+                };
+                self.limbs[limb_shift + i] ^= src << bit_shift;
+            }
+            if matches!(self.limbs().last(), Some(0)) {
+                self.limbs.pop();
+            }
+        }
+        self.normalize();
+    }
 }
 
 impl core::ops::Shr<u64> for &Gf2Poly {
@@ -296,6 +333,14 @@ mod tests {
             let recombined = lo + mid * Gf2Poly::x_to_the_power_of(idx1) + hi * Gf2Poly::x_to_the_power_of(idx2);
 
             prop_assert_poly_eq!(a, recombined);
+        }
+
+        #[test]
+        fn fused_shl_add(a: Gf2Poly, b: Gf2Poly, shift in 0u64..256) {
+            let mut copy = a.clone();
+            copy.fused_shl_add(&b, shift);
+            let shifted = a + (b << shift);
+            prop_assert_poly_eq!(copy, shifted);
         }
     }
 }
