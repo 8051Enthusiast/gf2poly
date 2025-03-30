@@ -156,7 +156,7 @@ impl Gf2Poly {
     pub fn from_limbs(limbs: &[Limb]) -> Self {
         let len = normalized_len(limbs);
         let limb_vec = LimbStorage::from(&limbs[..len]);
-        let deg = deg(limbs);
+        let deg = deg(&limbs[..len]);
         Gf2Poly {
             limbs: limb_vec,
             deg,

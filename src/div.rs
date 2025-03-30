@@ -70,18 +70,59 @@ fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
     let lo = f.truncated(hdeg);
     let lo_inv = inverse_mod_power_impl(&lo, hdeg);
     // let half = x^hdeg, and let `lo` be f mod half, and lo_inv the inverse of lo mod half.
-    // say hi_inv is such that inv = hi_inv * half + lo_inv is the inverse of f mod x^degree. then 
+    // say hi_inv is such that inv = hi_inv * half + lo_inv is the inverse of f mod x^degree. then
     // we equivalently have lo_inv = inv + hi_inv * half. let's calculate (modulo x^degree)
     // lo_inv * f = (inv + hi_inv * half) * f = 1 + half * hi_inv * f = 1 + half * hi_inv * lo (mod x^degree)
     // (note that we can turn the half * f into half * lo because the x^hdeg shifts the high bits of f out)
-    // 
+    //
     // multiplying with lo_inv again we finally get:
     // lo_inv * (1 + half * hi_inv * lo) = lo_inv + half * lo_inv * lo * hi_inv = lo_inv + half * hi_inv = inv (mod x^degree)
-    // 
+    //
     // also note that we get .square() basically for free in char 2.
     let mut inv = f * lo_inv.square();
     inv.truncate_mut(degree);
     inv
+}
+
+// simple Limb-length division for short polynomials
+fn divmod_base(mut lhs: Limb, mut rhs: Limb, ldeg: u8, rdeg: u8) -> (Limb, Limb) {
+    if rdeg > ldeg {
+        return (0, lhs);
+    }
+
+    let mut result = 0;
+    let mut diff = ldeg - rdeg;
+    rhs <<= diff;
+    loop {
+        let reduced = lhs ^ rhs;
+        if lhs > reduced {
+            lhs = reduced;
+            result |= 1 << diff;
+        }
+        if diff == 0 {
+            break (result, lhs);
+        }
+        rhs >>= 1;
+        diff -= 1;
+    }
+}
+
+// simple Limb-length remainder for short polynomials
+fn rem_base(mut lhs: Limb, mut rhs: Limb, ldeg: u8, rdeg: u8) -> Limb {
+    if rdeg > ldeg {
+        return lhs;
+    }
+
+    let mut diff = ldeg - rdeg;
+    rhs <<= diff;
+    loop {
+        lhs = lhs.min(lhs ^ rhs);
+        if diff == 0 {
+            break lhs;
+        }
+        rhs >>= 1;
+        diff -= 1;
+    }
 }
 
 impl Gf2Poly {
@@ -113,6 +154,15 @@ impl Gf2Poly {
         }
         if self.deg() == rhs.deg() {
             return Gf2Poly::one();
+        }
+        if let ([lhs_limb], [rhs_limb]) = (self.limbs(), rhs.limbs()) {
+            let lhs_deg = self.deg();
+            let rhs_deg = rhs.deg();
+            let (result, _) = divmod_base(*lhs_limb, *rhs_limb, lhs_deg as u8, rhs_deg as u8);
+            return Gf2Poly {
+                deg: lhs_deg - rhs_deg,
+                limbs: limbs![result],
+            };
         }
         self.div_rev(rhs)
     }
@@ -168,6 +218,12 @@ impl core::ops::Rem for &Gf2Poly {
     fn rem(self, rhs: Self) -> Self::Output {
         if rhs.is_zero() {
             return self.clone();
+        }
+        if let ([lhs_limb], [rhs_limb]) = (self.limbs(), rhs.limbs()) {
+            let lhs_deg = self.deg();
+            let rhs_deg = rhs.deg();
+            let result = rem_base(*lhs_limb, *rhs_limb, lhs_deg as u8, rhs_deg as u8);
+            return Gf2Poly::from_limbs(&[result]);
         }
         self + rhs * &(self / rhs)
     }
@@ -265,13 +321,20 @@ mod tests {
         }
 
         #[test]
-        fn euclid_div(a: Gf2Poly, b: Gf2Poly) {
+        fn remainder_deg(a: Gf2Poly, b: Gf2Poly) {
+            prop_assume!(!b.is_zero());
+            let r = &a % &b;
+            prop_assert!(r.is_zero() || r.deg() < b.deg());
+        }
+
+        #[test]
+        fn remainder_and_quotient(a: Gf2Poly, b: Gf2Poly) {
             prop_assume!(!b.is_zero());
             let q = &a / &b;
-            let res = a + &q * &b;
             prop_assert!(q.is_normalized());
-            prop_assert!(res.is_normalized());
-            prop_assert!(res.is_zero() || res.deg() < b.deg());
+            let rem1 = &a + &q * &b;
+            let rem2 = &a % &b;
+            prop_assert_poly_eq!(rem1, rem2);
         }
     }
 }
