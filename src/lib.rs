@@ -52,6 +52,10 @@ fn limbs_for_deg(n: u64) -> usize {
     usize::try_from(n / BITS).unwrap() + 1
 }
 
+fn limb_degree(a: Limb) -> u8 {
+    (BITS as u8).saturating_sub(1 + a.leading_zeros() as u8)
+}
+
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Gf2Poly {
     deg: u64,
@@ -160,6 +164,19 @@ impl Gf2Poly {
         Gf2Poly {
             limbs: limb_vec,
             deg,
+        }
+    }
+
+    /// Converts a single limb into a polynomial.
+    pub fn from_limb(limb: Limb) -> Self {
+        if limb == 0 {
+            return Gf2Poly::zero();
+        }
+        let mut limbs = LimbStorage::with_capacity(1);
+        limbs.push(limb);
+        Gf2Poly {
+            deg: limb_degree(limb) as u64,
+            limbs,
         }
     }
 

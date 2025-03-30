@@ -1,6 +1,7 @@
 use crate::{
-    Gf2Poly,
+    Gf2Poly, Limb, limb_degree,
     matrix::{Gf2Poly2x2Matrix, MaybeMatrix, TrivialSpace},
+    mul::clmul_limb,
 };
 
 // For an explanation of the fast gcd (hgcd) see
@@ -8,29 +9,31 @@ use crate::{
 
 /// basically just a regular xgcd implementation, but it stops as soon
 /// as it reaches half degree
-fn iter_hgcd(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> Gf2Poly2x2Matrix {
-    let halfdeg = a0.deg() / 2;
-    debug_assert!(a0.deg() >= a1.deg());
+fn iter_hgcd(a0: &mut Limb, a1: &mut Limb, mut a0deg: u8, mut a1deg: u8) -> [Limb; 4] {
+    let halfdeg = a0deg / 2;
+    debug_assert!(a0deg >= a1deg);
 
-    let mut a00 = Gf2Poly::one();
-    let mut a01 = Gf2Poly::zero();
-    let mut a10 = Gf2Poly::zero();
-    let mut a11 = Gf2Poly::one();
+    let mut a00: Limb = 1;
+    let mut a01: Limb = 0;
+    let mut a10: Limb = 0;
+    let mut a11: Limb = 1;
 
     loop {
-        if a1.deg() <= halfdeg {
-            break Gf2Poly2x2Matrix(a00, a01, a10, a11);
+        if a1deg <= halfdeg {
+            break [a00, a01, a10, a11];
         }
 
-        let (q, r) = a0.divmod(a1);
-        core::mem::swap(a0, a1);
+        let (q, r) = crate::div::divmod_base(*a0, *a1, a0deg, a1deg);
+        *a0 = *a1;
         *a1 = r;
+        a0deg = a1deg;
+        a1deg = limb_degree(*a1);
 
         core::mem::swap(&mut a00, &mut a10);
         core::mem::swap(&mut a01, &mut a11);
 
-        a10 += &(&a00 * &q);
-        a11 += &(&a01 * &q);
+        a10 ^= clmul_limb(a00, q);
+        a11 ^= clmul_limb(a01, q);
     }
 }
 
@@ -49,8 +52,12 @@ fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
 
     // note that for degree < 4, we don't actually make progress
     // using this function, so we have to switch implementation
-    if a1.deg() < 256 {
-        return M::projection(iter_hgcd(a0, a1));
+    if let ([a0limb], [a1limb]) = (a0.limbs.as_mut_slice(), a1.limbs.as_mut_slice()) {
+        let [a00, a01, a10, a11] =
+            iter_hgcd(a0limb, a1limb, a0.deg as u8, a1.deg as u8).map(Gf2Poly::from_limb);
+        *a0 = Gf2Poly::from_limb(*a0limb);
+        *a1 = Gf2Poly::from_limb(*a1limb);
+        return M::projection(Gf2Poly2x2Matrix(a00, a01, a10, a11));
     }
 
     // we recursively run the hgcd on just the upper halfs, since

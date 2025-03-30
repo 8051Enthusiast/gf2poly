@@ -85,7 +85,7 @@ fn inverse_mod_power_impl(f: &Gf2Poly, degree: u64) -> Gf2Poly {
 }
 
 // simple Limb-length division for short polynomials
-fn divmod_base(mut lhs: Limb, mut rhs: Limb, ldeg: u8, rdeg: u8) -> (Limb, Limb) {
+pub(crate) fn divmod_base(mut lhs: Limb, mut rhs: Limb, ldeg: u8, rdeg: u8) -> (Limb, Limb) {
     if rdeg > ldeg {
         return (0, lhs);
     }

@@ -1,7 +1,7 @@
 use super::Gf2Poly;
 use super::Limb;
-use crate::LimbStorage;
 use crate::BITS;
+use crate::LimbStorage;
 
 unsafe extern "C" {
     fn gf2x_mul(
@@ -11,6 +11,15 @@ unsafe extern "C" {
         b: *const Limb,
         bn: Limb,
     ) -> core::ffi::c_int;
+}
+
+pub fn clmul_limb(a: Limb, b: Limb) -> Limb {
+    let mut ret_buf = [0 as Limb; 2];
+    unsafe {
+        // safety: 1 + 1 = 2, the size of ret_buf
+        gf2x_mul(ret_buf.as_mut_ptr(), &raw const a, 1, &raw const b, 1);
+    }
+    ret_buf[0]
 }
 
 impl core::ops::Mul<&Gf2Poly> for &Gf2Poly {

@@ -149,7 +149,8 @@ impl<T: Borrow<Gf2Poly>> Gf2PolyMod<T> {
     /// ## Example
     /// ```rust
     /// # use gf2poly::{Gf2Poly, Gf2PolyMod};
-    /// let modulus = Gf2PolyMod::new("b1".parse().unwrap());
+    /// let m: Gf2Poly = "b1".parse().unwrap();
+    /// let modulus = Gf2PolyMod::new(m);
     /// let a: Gf2Poly = "2f7b7".parse().unwrap();
     /// let remainder = modulus.remainder(&a);
     /// assert_eq!(remainder.to_string(), "3");
