@@ -2,7 +2,7 @@ use crate::Gf2Poly;
 
 pub(crate) trait MaybeMatrix: core::ops::Mul<Self, Output = Self> + Sized {
     fn projection(matrix: Gf2Poly2x2Matrix) -> Self;
-    fn quotient_matrix_projection(quotient: Gf2Poly) -> Self;
+    fn apply_quotient(self, quotient: Gf2Poly) -> Self;
     fn identity() -> Self;
 }
 
@@ -44,8 +44,13 @@ impl MaybeMatrix for Gf2Poly2x2Matrix {
         matrix
     }
 
-    fn quotient_matrix_projection(quotient: Gf2Poly) -> Self {
-        Gf2Poly2x2Matrix(Gf2Poly::zero(), Gf2Poly::one(), Gf2Poly::one(), quotient)
+    fn apply_quotient(mut self, quotient: Gf2Poly) -> Self {
+        core::mem::swap(&mut self.0, &mut self.2);
+        core::mem::swap(&mut self.1, &mut self.3);
+
+        self.2 += &self.0 * &quotient;
+        self.3 += &self.1 * quotient;
+        self
     }
 
     fn identity() -> Self {
@@ -76,7 +81,7 @@ impl MaybeMatrix for TrivialSpace {
         Self
     }
 
-    fn quotient_matrix_projection(_: Gf2Poly) -> Self {
+    fn apply_quotient(self, _: Gf2Poly) -> Self {
         Self
     }
 

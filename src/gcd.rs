@@ -79,8 +79,7 @@ fn hgcd<M: MaybeMatrix>(a0: &mut Gf2Poly, a1: &mut Gf2Poly) -> M {
     }
     let (quotient, b2) = b0.divmod(&b1);
     drop(b0);
-    let quotient_matrix = M::quotient_matrix_projection(quotient);
-    let first_matrix_step = quotient_matrix * M::projection(first_matrix);
+    let first_matrix_step = M::projection(first_matrix).apply_quotient(quotient);
     let quarterdeg = halfdeg / 2;
     // we do the same as above, but instead of using the (deg / 2)..deg part,
     // we use the (deg / 4)..(deg * 3/4) part
@@ -105,7 +104,7 @@ impl Gf2Poly {
             debug_assert!(a.deg() >= b.deg());
             let (quotient, remainder) = a.divmod(b);
             if remainder.is_zero() {
-                acc = M::quotient_matrix_projection(quotient) * acc;
+                acc = acc.apply_quotient(quotient);
                 return (core::mem::take(b), acc);
             }
 
@@ -114,7 +113,7 @@ impl Gf2Poly {
                 return (core::mem::take(a), acc);
             }
             let (quotient, remainder) = a.divmod(b);
-            acc = M::quotient_matrix_projection(quotient) * acc;
+            acc = acc.apply_quotient(quotient);
 
             *a = core::mem::take(b);
             *b = remainder;
