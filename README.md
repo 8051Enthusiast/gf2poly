@@ -1,5 +1,4 @@
-gf2poly
-===
+# gf2poly
 
 This rust crate provides a `Gf2Poly` type which implements polynomial arithmetic over GF(2).
 It links against the `gf2x` C library and care is taken to be asymptotically efficient.
@@ -14,3 +13,7 @@ It can either be installed through a package manager if you're lucky (but note t
 `gf2poly` provides two environment variables for controlling the linking:
  * `GF2POLY_STATIC_LIB`: If this is `1`, `gf2x` will be linked statically.
  * `GF2POLY_LIBRARY_PATH`: An additional path for the linker to search for static libraries at compile time.
+
+License
+-------
+The source files in this repository are licensed under MIT, but note that the `gf2x` library this crate links against is licensed either under the GPLv3 or the LGPLv2.1+, depending on the version you use.
