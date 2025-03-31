@@ -9,7 +9,7 @@ links = "gf2x"
 
 [dependencies]
 rand = { version = "0.9", default-features = false, features = ["std_rng"]}
-smallvec = { version = "1.14.0", features = ["union"] }
+smallvec = { version = "1", features = ["union"] }
 
 [features]
 default = []
