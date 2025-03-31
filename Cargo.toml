@@ -5,6 +5,7 @@ edition = "2024"
 authors = ["8051enthusiast <8051enthusiast@protonmail.com>"]
 license = "LGPL"
 description = "GF(2) polynomial arithmetic"
+repository = "https://github.com/8051enthusiast/gf2poly"
 links = "gf2x"
 
 [dependencies]
