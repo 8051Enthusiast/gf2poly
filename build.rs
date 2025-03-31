@@ -1,6 +1,6 @@
 fn main() {
     let mut link_type = "dylib";
-    println!("cargo:rerun-if-env-changed=GF2POLY_LIB_PATH");
+    println!("cargo:rerun-if-env-changed=GF2POLY_LIBRARY_PATH");
     println!("cargo:rerun-if-env-changed=GF2POLY_STATIC_LIB");
     for (key, value) in std::env::vars() {
         match key.as_str() {
@@ -9,7 +9,7 @@ fn main() {
                     link_type = "static";
                 }
             }
-            "GF2POLY_LIB_PATH" => {
+            "GF2POLY_LIBRARY_PATH" => {
                 println!("cargo:rustc-link-search=native={}", value);
             }
             _ => continue,

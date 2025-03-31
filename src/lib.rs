@@ -22,6 +22,7 @@ use core::{fmt::Display, str::FromStr};
 use rand::Rng;
 
 pub type Limb = core::ffi::c_ulong;
+
 // a plain vec is easier for debugging
 #[cfg(debug_assertions)]
 type LimbStorage = Vec<Limb>;
