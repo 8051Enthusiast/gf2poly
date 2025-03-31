@@ -1,8 +1,8 @@
 use rand::SeedableRng;
 
 use crate::{Gf2Poly, Gf2PolyMod};
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 
 // Wikipedia has an excellent page on factorization of polynomials over finite fields:
 // https://en.wikipedia.org/wiki/Factorization_of_polynomials_over_finite_fields
@@ -276,7 +276,6 @@ impl Gf2Poly {
 mod tests {
     use crate::{Gf2Poly, prop_assert_poly_eq};
     use proptest::prelude::*;
-
 
     proptest! {
         #[test]

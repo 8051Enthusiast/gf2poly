@@ -96,8 +96,8 @@ impl Gf2Poly {
 
 /// This type precalculates the factor for Barrett reduction, which can be used to
 /// speed up calculations using the same modulus.
-/// This takes a Borrow<Gf2Poly>, which can for example be a Gf2Poly, a &Gf2Poly or
-/// an Arc<Gf2Poly>
+/// This takes a `Borrow<Gf2Poly>`, which can for example be a Gf2Poly, a &Gf2Poly or
+/// an `Arc<Gf2Poly>`.
 pub struct Gf2PolyMod<T: Borrow<Gf2Poly>> {
     modulus: T,
     barrett_reducer: Gf2Poly,
@@ -121,7 +121,7 @@ impl<T: Borrow<Gf2Poly>> Gf2PolyMod<T> {
 
     /// Returns a reference to the original modulus this [Gf2PolyMod] was constructed with.
     pub fn modulus(&self) -> &Gf2Poly {
-        &self.modulus.borrow()
+        self.modulus.borrow()
     }
 
     /// Returns the modulus value this [Gf2PolyMod] was constructed with.

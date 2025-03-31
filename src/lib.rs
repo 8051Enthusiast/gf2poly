@@ -1,5 +1,11 @@
 #![debugger_visualizer(gdb_script_file = "gf2poly_dbg.py")]
 #![cfg_attr(not(test), no_std)]
+//! This rust crate provides a `Gf2Poly` type which implements polynomial arithmetic over GF(2).
+//! It links against the `gf2x` C library and care is taken to be asymptotically efficient.
+//! For example, multiplication is `n log n` (because the `gf2x` implementation is), and as a result, division can also be implemented in `n log n`.
+//! This crate also implements a fast `gcd` in `n log² n` time and a basic implementation of factorization.
+//! extern crate alloc;
+
 extern crate alloc;
 
 pub use rand;
@@ -173,8 +179,7 @@ impl Gf2Poly {
         if limb == 0 {
             return Gf2Poly::zero();
         }
-        let mut limbs = LimbStorage::with_capacity(1);
-        limbs.push(limb);
+        let limbs = limbs![limb];
         Gf2Poly {
             deg: limb_degree(limb) as u64,
             limbs,
